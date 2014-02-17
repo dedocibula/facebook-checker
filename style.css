@@ -1,0 +1,42 @@
+body, iframe, form {
+  margin: 0px;
+  padding: 0px;
+  border: 0px;
+}
+form {
+  display: none;
+}
+.max-height {
+  height: 580px;
+}
+/* height of five jewel-list items plus header and footer */
+.five-height-plus {
+  height: 370px;
+}
+.max-width {
+  width: 780px;
+}
+.half-width {
+  width: 390px;
+}
+/* half-width is messed on login form */
+.half-width-plus {
+  width: 420px;
+}
+/* jewel-list-item width */
+.jewel-list-width {
+  width: 330px;
+}
+.loading {
+  background-image: url('/images/indicator_white_large.gif');
+  background-attachment:fixed;
+  background-repeat:no-repeat;
+  background-position: center center;
+}
+.error {
+  margin: 1em;
+  padding: 0 0.5em;
+  display: none;
+  border: 1px solid red;
+  font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
+}
