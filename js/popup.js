@@ -83,7 +83,7 @@ chrome.webRequest.onHeadersReceived.addListener(
 chrome.runtime.onMessage.addListener(
     function(message, sender, sendResponse) {
       if (message) {
-        for (key in message)
+        for (var key in message)
           this[key](message[key]);
       }
     }

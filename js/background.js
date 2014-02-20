@@ -278,9 +278,8 @@ DesktopNotifications = {
   },
 
   expireNotifications: function() {
-    DesktopNotifications.notifications.forEach(function(id) { 
-      chrome.notifications.clear(id, null);
-    });
+    for (var id in DesktopNotifications.notifications)
+      chrome.notifications.clear(id, function() {});
     DesktopNotifications.notifications = {};
     DesktopNotifications._timer = null;
   },
