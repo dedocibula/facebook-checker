@@ -15,4 +15,4 @@ removeWarnings();
 
 setTimeout(function() {
 	getWindowHeight();
-}, 300);
+}, 50);
