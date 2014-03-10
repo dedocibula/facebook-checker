@@ -209,15 +209,17 @@ DesktopNotifications = {
       var capType = type.charAt(0).toUpperCase() + type.slice(1);
       var attributes = self['parse' + capType + 'Attributes'](result);
       
-      chrome.notifications.create(attributes[0], {
+      for (var i = 0; i < attributes.length; i++) {
+        chrome.notifications.create(attributes[i][0], {
         type: "basic",
         title: "Facebook - New Messages in " + capType,
-        message: attributes[2],
+        message: attributes[i][2],
         iconUrl: "images/icon48.png"
       }, function(id) {
-        self.notifications[id] = attributes[1];
+        self.notifications[id] = attributes[i][1];
         self.restartTimer(self.DEFAULT_FADEOUT_DELAY);
       });
+      };
     }, function(e, uri) { /* do nothing */ });
   },
 
@@ -250,31 +252,38 @@ DesktopNotifications = {
 
   parseNotificationsAttributes: function(result) {
     var self = DesktopNotifications;
+    var attributes = [];
     var dom = self.wrap(result, 'html');
-    var liElement = dom.getElementsByTagName('li')[0];
-    var notificationId = liElement.id;
-    var target = liElement.getElementsByTagName('a')[0].href;
-    var divs = liElement.getElementsByTagName('div');
-    for (var i = 0; i < divs.length; i++) {
-      if (divs[i].id && divs[i].id.indexOf(notificationId) == 0)
-        var message = divs[i].innerText;
+    var liElements = dom.getElementsByClassName('jewelItemNew');
+    for (var i = liElements.length - 1; i >= 0; i--) {
+      var notificationId = liElements[i].id;
+      var target = liElements[i].getElementsByTagName('a')[0].href;
+      var divs = liElements[i].getElementsByTagName('div');
+      for (var i = 0; i < divs.length; i++) {
+        if (divs[i].id && divs[i].id.indexOf(notificationId) == 0)
+          var message = divs[i].innerText;
+      };
+      attributes.push([notificationId, target, message]);
     };
-    return [notificationId, target, message];
+    return attributes;
   },
 
   parseInboxAttributes: function(result) {
     var self = DesktopNotifications;
+    var attributes = [];
     var dom = self.wrap(result, 'html');
-    var liElement = dom.getElementsByTagName('li')[0];
-    var target = self.protocol + self.domain + '/messages' + 
-                 liElement.getElementsByTagName('a')[0].search;
-    var divs = liElement.getElementsByClassName('content')[0].childNodes;
-    var notificationId = divs[0].innerText;
-    var message = '';
-    for (var i = 0; i < divs.length; i++) {
-      message += divs[i].innerText + '\n';
+    var liElements = dom.getElementsByClassName('jewelItemNew');
+    for (var i = liElements.length - 1; i >= 0; i--) {
+      var target = self.protocol + self.domain + '/messages' + 
+                   liElements.getElementsByTagName('a')[0].search;
+      var divs = liElements.getElementsByClassName('content')[0].childNodes;
+      var notificationId = divs[0].innerText;
+      var message = '';
+      for (var i = 0; i < divs.length; i++)
+        message += divs[i].innerText + '\n';
+      attributes.push([notificationId, target, message]);
     };
-    return [notificationId, target, message];
+    return attributes;
   },
 
   expireNotifications: function() {
