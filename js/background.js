@@ -12,7 +12,7 @@ DesktopNotifications = {
   PERMISSION_NOT_ALLOWED: 1,
   PERMISSION_DENIED: 2,
 
-  getEndpoint: '/desktop_notifications/get.php',
+  getEndpoint: '/desktop_notifications/popup.php',
   countsEndpoint: '/desktop_notifications/counts.php',
   domain: '',
   protocol: '',
