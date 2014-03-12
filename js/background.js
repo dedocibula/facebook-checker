@@ -211,14 +211,14 @@ DesktopNotifications = {
       
       for (var i = 0; i < attributes.length; i++) {
         chrome.notifications.create(attributes[i][0], {
-        type: "basic",
-        title: "Facebook - New Messages in " + capType,
-        message: attributes[i][2],
-        iconUrl: "images/icon48.png"
-      }, function(id) {
-        self.notifications[id] = attributes[i][1];
-        self.restartTimer(self.DEFAULT_FADEOUT_DELAY);
-      });
+          type: "basic",
+          title: "Facebook - New Messages in " + capType,
+          message: attributes[i][2],
+          iconUrl: "images/icon48.png"
+        }, function(id) {
+          self.restartTimer(self.DEFAULT_FADEOUT_DELAY);
+        });
+        self.notifications[attributes[i][0]] = attributes[i][1];
       };
     }, function(e, uri) { /* do nothing */ });
   },
@@ -232,9 +232,9 @@ DesktopNotifications = {
       var notificationId = liElements[i].id;
       var target = liElements[i].getElementsByTagName('a')[0].href;
       var divs = liElements[i].getElementsByTagName('div');
-      for (var i = 0; i < divs.length; i++) {
-        if (divs[i].id && divs[i].id.indexOf(notificationId) == 0)
-          var message = divs[i].innerText;
+      for (var j = 0; j < divs.length; j++) {
+        if (divs[j].id && divs[j].id.indexOf(notificationId) == 0)
+          var message = divs[j].innerText;
       };
       attributes.push([notificationId, target, message]);
     };
@@ -252,8 +252,8 @@ DesktopNotifications = {
       var divs = liElements.getElementsByClassName('content')[0].childNodes;
       var notificationId = divs[0].innerText;
       var message = '';
-      for (var i = 0; i < divs.length; i++)
-        message += divs[i].innerText + '\n';
+      for (var j = 0; j < divs.length; j++)
+        message += divs[j].innerText + '\n';
       attributes.push([notificationId, target, message]);
     };
     return attributes;
