@@ -248,8 +248,8 @@ DesktopNotifications = {
     var liElements = dom.getElementsByClassName('jewelItemNew');
     for (var i = liElements.length - 1; i >= 0; i--) {
       var target = self.protocol + self.domain + '/messages' + 
-                   liElements.getElementsByTagName('a')[0].search;
-      var divs = liElements.getElementsByClassName('content')[0].childNodes;
+                   liElements[i].getElementsByTagName('a')[0].search;
+      var divs = liElements[i].getElementsByClassName('content')[0].childNodes;
       var notificationId = divs[0].innerText;
       var message = '';
       for (var j = 0; j < divs.length; j++)
