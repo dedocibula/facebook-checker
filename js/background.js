@@ -27,6 +27,9 @@ DesktopNotifications = {
 
   fb_dtsg: '',
 
+  _sound: null,
+  _sound_playing: false,
+
   /**
    * Start polling for notifications.
    */
@@ -143,6 +146,7 @@ DesktopNotifications = {
 
     self._handleNotifInfo(serverInfo.notifications);
     self._handleInboxInfo(serverInfo.inbox);
+    self._sound_playing = false;
   },
 
   _handleNotifInfo: function(notifInfo) {
@@ -155,6 +159,7 @@ DesktopNotifications = {
         self._latest_notif = notifInfo.latest;
         self._latest_read_notif = notifInfo.latest_read;
         self.addNotificationByType('notifications');
+        self.playSound();
       }
       self._num_unread_notif = notifInfo.num_unread;
       self.updateUnreadCounter();
@@ -169,6 +174,7 @@ DesktopNotifications = {
     if (inboxInfo.unread !== self._num_unread_inbox) {
       if (inboxInfo.unread > self._num_unread_inbox) {
         self.addNotificationByType('inbox');
+        self.playSound();
       }
       self._num_unread_inbox = inboxInfo.unread;
       self.updateUnreadCounter();
@@ -289,6 +295,16 @@ DesktopNotifications = {
     var node = document.createElement(element);
     node.innerHTML = string;
     return node;
+  },
+
+  playSound: function() {
+    var self = DesktopNotifications;
+    if (!self._sound_playing) {
+      self._sound_playing = true;
+      if (!self._sound)
+        self._sound = new Audio('chime.ogg');
+      self._sound.play();
+    }
   }
 };
 
