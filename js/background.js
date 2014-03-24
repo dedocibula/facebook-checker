@@ -158,7 +158,7 @@ DesktopNotifications = {
       if (self._latest_notif < notifInfo.latest) {
         self._latest_notif = notifInfo.latest;
         self._latest_read_notif = notifInfo.latest_read;
-        self.addNotificationByType('notifications');
+        self.addNotificationByType('Notifications');
         self.playSound();
       }
       self._num_unread_notif = notifInfo.num_unread;
@@ -173,7 +173,7 @@ DesktopNotifications = {
     }
     if (inboxInfo.unread !== self._num_unread_inbox) {
       if (inboxInfo.unread > self._num_unread_inbox) {
-        self.addNotificationByType('inbox');
+        self.addNotificationByType('Inbox');
         self.playSound();
       }
       self._num_unread_inbox = inboxInfo.unread;
@@ -212,13 +212,12 @@ DesktopNotifications = {
       '?type=' + (type || '');
     
     self._fetch(uri, function(result) {
-      var capType = type.charAt(0).toUpperCase() + type.slice(1);
-      var attributes = self['parse' + capType + 'Attributes'](result);
+      var attributes = self['parse' + type + 'Attributes'](result);
       
       for (var i = 0; i < attributes.length; i++) {
         chrome.notifications.create(attributes[i][0], {
           type: "basic",
-          title: "Facebook - New Messages in " + capType,
+          title: "Facebook - New Messages in " + type,
           message: attributes[i][2],
           iconUrl: "images/icon48.png"
         }, function(id) {
