@@ -21,6 +21,7 @@ DesktopNotifications = {
 
   _latest_notif: 0,
   _latest_read_notif: 0,
+  _ignore_notif: {},
 
   _num_unread_notif: 0,
   _num_unread_inbox: 0,
@@ -144,9 +145,9 @@ DesktopNotifications = {
     // update CSRF token
     self.fb_dtsg = serverInfo.fb_dtsg;
 
+    self._sound_playing = false;
     self._handleNotifInfo(serverInfo.notifications);
     self._handleInboxInfo(serverInfo.inbox);
-    self._sound_playing = false;
   },
 
   _handleNotifInfo: function(notifInfo) {
@@ -154,14 +155,19 @@ DesktopNotifications = {
     if (!notifInfo || notifInfo.no_change) {
       return;
     }
-    if (self._num_unread_notif !== notifInfo.num_unread) {
+    if (self._num_unread_notif + Object.keys(self._ignore_notif).length <= notifInfo.num_unread) {
       if (self._latest_notif < notifInfo.latest) {
         self._latest_notif = notifInfo.latest;
         self._latest_read_notif = notifInfo.latest_read;
+        self._ignore_notif = notifInfo.unread;
+        self._num_unread_notif = notifInfo.num_unread;
         self.addNotificationByType('Notifications');
-        self.playSound();
       }
-      self._num_unread_notif = notifInfo.num_unread;
+    } else {
+      for (var ignored in self._ignore_notif)
+        if (!notifInfo.unread.hasOwnProperty(ignored))
+          delete self._ignore_notif[ignored];
+      self._num_unread_notif = notifInfo.num_unread - Object.keys(self._ignore_notif).length;
       self.updateUnreadCounter();
     }
   },
@@ -224,6 +230,13 @@ DesktopNotifications = {
           self.restartTimer(self.DEFAULT_FADEOUT_DELAY);
         });
         self.notifications[attributes[i][0]] = attributes[i][1];
+        delete self._ignore_notif[attributes[i][0]];
+      };
+      if (type === 'Notifications') {
+        self._num_unread_notif = attributes.length;
+        self.updateUnreadCounter();
+        if (self._num_unread_notif > 0)
+          self.playSound();
       };
     }, function(e, uri) { /* do nothing */ });
   },
