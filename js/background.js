@@ -102,9 +102,7 @@ DesktopNotifications = {
     callback = callback || function(d) { console.log(d); };
     errback = errback || function(u, e) { console.error(u, e); };
     var self = DesktopNotifications;
-    var uri = self.protocol + self.domain + self.countsEndpoint +
-      '?latest=' + self._latest_notif +
-      '&latest_read=' + self._latest_read_notif;
+    var uri = self.protocol + self.domain + self.countsEndpoint;
     if (no_cache) {
       uri += '&no_cache=1';
     }
@@ -158,7 +156,6 @@ DesktopNotifications = {
     if (self._num_unread_notif + Object.keys(self._ignore_notif).length <= notifInfo.num_unread) {
       if (self._latest_notif < notifInfo.latest) {
         self._latest_notif = notifInfo.latest;
-        self._latest_read_notif = notifInfo.latest_read;
         self._ignore_notif = notifInfo.unread;
         self._num_unread_notif = notifInfo.num_unread;
         self.addNotificationByType('notifications');
@@ -255,7 +252,7 @@ DesktopNotifications = {
         if (divs[j].id && divs[j].id.indexOf(notificationId) == 0)
           var message = divs[j].innerText;
       };
-      attributes.push([notificationId, target, message]);
+      attributes.push([notificationId.substring(13), target, message]);
     };
     return attributes;
   },
