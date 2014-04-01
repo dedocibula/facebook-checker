@@ -159,6 +159,8 @@ DesktopNotifications = {
         self._ignore_notif = notifInfo.unread;
         self._num_unread_notif = notifInfo.num_unread;
         self.addNotificationByType('notifications');
+      } else {
+        self.updateUnreadCounter();
       }
     } else {
       for (var ignored in self._ignore_notif)
