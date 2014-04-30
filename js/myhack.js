@@ -1,5 +1,5 @@
 function removeWarnings() {
-	var script = document.querySelectorAll('[data-signature]')[0];
+	var script = document.body.getElementsByTagName('script')[0];
 	while (script && script.nextElementSibling.nodeName != "SCRIPT") {
 		script.nextElementSibling.parentNode.removeChild(script.nextElementSibling);
 	}
