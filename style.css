@@ -40,3 +40,30 @@ form {
   border: 1px solid red;
   font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
 }
+.notification-read-div {
+  display: block !important;
+  position: absolute; 
+  top: 3.5px; 
+  right: 2px;
+}
+
+.notification-read-button {
+  background-image: url(/rsrc.php/v2/yi/r/VbMsTLH_nZe.png);
+  background-repeat: no-repeat;
+  background-size: auto;
+  background-position: -21px -1277px;
+  height: 12px;
+  width: 5px;
+}
+
+#jewelCase .jewelHighlightItem li a.link:hover, 
+#jewelCase .jewelHighlightItem li a.link:active, 
+#jewelCase .jewelHighlightItem li a.link:focus {
+  background-color: inherit !important;
+  border-bottom: transparent;
+  border-top: transparent;
+  outline: none;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  text-decoration: none;
+}

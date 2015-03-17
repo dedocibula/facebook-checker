@@ -21,6 +21,7 @@
       {
          "matches": [ "https://*.facebook.com/desktop_notifications/popup.php*" ],
          "js": [ "js/myhack.js" ],
+         "css": [ "style.css" ],
          "all_frames": true
       }
    ],
