@@ -41,7 +41,6 @@ form {
   font-family: 'lucida grande', tahoma, verdana, arial, sans-serif;
 }
 .notification-read-div {
-  display: block !important;
   position: absolute; 
   top: 3.5px; 
   right: 2px;
