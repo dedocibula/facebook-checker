@@ -56,14 +56,35 @@ form {
   width: 5px;
 }
 
+.info {
+  width: 250px;
+}
+
+#jewelCase .jewelHighlightItem li:hover, 
+#jewelCase .jewelHighlightItem li:active, 
+#jewelCase .jewelHighlightItem li:focus {
+  background-color: #6d84b4 !important;
+  border-bottom: 1px solid #3b5998;
+  border-top: 1px solid #3b5998;
+  padding-top: -1px;
+  padding-bottom: -1px;
+}
+
 #jewelCase .jewelHighlightItem li a.link:hover, 
 #jewelCase .jewelHighlightItem li a.link:active, 
 #jewelCase .jewelHighlightItem li a.link:focus {
-  background-color: inherit !important;
-  border-bottom: transparent;
-  border-top: transparent;
-  outline: none;
+  border-bottom: initial;
+  border-top: initial;
   padding-top: 4px;
   padding-bottom: 4px;
-  text-decoration: none;
+}
+
+#jewelCase .jewelHighlightItem li:hover span, 
+#jewelCase .jewelHighlightItem li:active span, 
+#jewelCase .jewelHighlightItem li:focus span, 
+#jewelCase .jewelHighlightItem li:hover div, 
+#jewelCase .jewelHighlightItem li:active div, 
+#jewelCase .jewelHighlightItem li:focus div, 
+#jewelCase .jewelHighlightItem li.selected a {
+  color: #fff;
 }
