@@ -8,7 +8,7 @@ function removeWarnings() {
 function getWindowHeight() {
 	var jewels = document.getElementsByClassName('jewel');
 	if (jewels.length != 0)
-		chrome.runtime.sendMessage({ 'resizeWindow': jewels[0].offsetHeight });
+		chrome.runtime.sendMessage({ 'resizeWindow': jewels[0].offsetHeight + 1 });
 }
 
 function changeAllMessagesUrl() {
