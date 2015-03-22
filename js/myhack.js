@@ -56,11 +56,7 @@ function _bindRead(element) {
 		var url = _formUrl(metadata.alert_id);
 		_ajax('GET', 
 			url, 
-			function() {
-				metadata.unread = '0';
-				parentElement.classList.remove('jewelItemNew');
-				parentElement.dataset.gt = JSON.stringify(metadata);
-			},
+			_updateUnreadCounter,
 			console.log
 		);
 	});
@@ -85,6 +81,13 @@ function _formUrl(alertId) {
 		'?alert_ids%5B0%5D=' + alertId +
 		'&fb_dtsg=' + getFb_dtsgValue() + 
 		'&from_read_button=true';
+}
+
+function _updateUnreadCounter() {
+	metadata.unread = '0';
+	parentElement.classList.remove('jewelItemNew');
+	parentElement.dataset.gt = JSON.stringify(metadata);
+	chrome.runtime.sendMessage({ 'updateUnreadCounter': null });
 }
 
 function _display(element, event, value) {
