@@ -54,11 +54,8 @@ function _bindRead(element) {
 			return;
 		var metadata = JSON.parse(parentElement.dataset.gt);
 		var url = _formUrl(metadata.alert_id);
-		_ajax('GET', 
-			url, 
-			_updateUnreadCounter,
-			console.log
-		);
+		_ajax('GET', url, _updateUnreadCounter,	console.log);
+		_invalidate(parentElement, metadata);
 	});
 }
 
@@ -83,10 +80,13 @@ function _formUrl(alertId) {
 		'&from_read_button=true';
 }
 
-function _updateUnreadCounter() {
+function _invalidate(newItem, metadata) {
 	metadata.unread = '0';
 	parentElement.classList.remove('jewelItemNew');
 	parentElement.dataset.gt = JSON.stringify(metadata);
+}
+
+function _updateUnreadCounter() {
 	chrome.runtime.sendMessage({ 'updateUnreadCounter': null });
 }
 
