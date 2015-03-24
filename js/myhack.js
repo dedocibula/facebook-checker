@@ -82,8 +82,8 @@ function _formUrl(alertId) {
 
 function _invalidate(newItem, metadata) {
 	metadata.unread = '0';
-	parentElement.classList.remove('jewelItemNew');
-	parentElement.dataset.gt = JSON.stringify(metadata);
+	newItem.classList.remove('jewelItemNew');
+	newItem.dataset.gt = JSON.stringify(metadata);
 }
 
 function _updateUnreadCounter() {
