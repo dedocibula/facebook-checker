@@ -13,7 +13,10 @@ function resizeWindow(height) {
 
 function updateUnreadCounter() {
   DesktopNotifications.fetchServerInfo(
-    DesktopNotifications.handleServerInfo,
+    function(serverInfo) {
+      DesktopNotifications.handleServerInfo(serverInfo);
+      DesktopNotifications.showActiveIcon();
+    },
     DesktopNotifications.showInactiveIcon,
     true // no_cache after clicking popup
   );
@@ -94,6 +97,7 @@ try {
     DesktopNotifications.fetchServerInfo(
       function(serverInfo) {
         DesktopNotifications.handleServerInfo(serverInfo);
+        DesktopNotifications.showActiveIcon();
         loadIframe();
       },
       DesktopNotifications.showInactiveIcon);
