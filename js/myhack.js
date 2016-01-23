@@ -59,18 +59,18 @@ function _bindRead(element) {
 	});
 }
 
-function _ajax(method, url, success, failure) {
+function _ajax(method, url, success, failure, data) {
 	var ajaxRequest = new XMLHttpRequest();
 	ajaxRequest.onreadystatechange = function() {
 		if (ajaxRequest.readyState === 4) {
 			if (ajaxRequest.status === 200)
-				success();
+				success(ajaxRequest.response);
 			else
 				failure(ajaxRequest.statusText);
 		}
 	};
 	ajaxRequest.open(method, url, true);
-	ajaxRequest.send();
+	ajaxRequest.send(_serialize(data));
 }
 
 function _formUrl(alertId) {
@@ -96,6 +96,25 @@ function _display(element, event, value) {
 	});
 }
 
+function _serialize(data) {
+	var str = [];
+	for(var p in data)
+  		str.push(encodeURIComponent(p) + "=" + encodeURIComponent(data[p]));
+	return str.join("&");
+}
+
+function test() {
+	var url = 'https://www.facebook.com/ajax/notifications/client/get.php';
+	_ajax("POST", url, function(response) {
+		var notifications = JSON.parse(response.match(/{.+}/)[0]).payload.nodes;
+		console.log(notifications);
+	}, console.log, {
+		__a: 1,
+		fb_dtsg: getFb_dtsgValue()
+	});
+}
+
+test();
 removeWarnings();
 enableReadButtons();
 fixHighlight();
