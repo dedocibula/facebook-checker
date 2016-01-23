@@ -1,3 +1,5 @@
+# DEPRECATED by Facebook - Version 2.0.0 (complete overhaul) is being developed.
+
 Facebook Notifications
 ----------------------
 
