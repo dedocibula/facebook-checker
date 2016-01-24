@@ -92,7 +92,3 @@ orleans.codegen.cs
 # Project specific
 web.Debug.config
 web.Release.config
-*.js
-*.js.map
-!Scripts/*.js
-!Scripts/*.map
