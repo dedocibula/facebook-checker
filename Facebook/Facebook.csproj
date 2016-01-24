@@ -53,6 +53,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="background.ts" />
+    <TypeScriptCompile Include="entities.ts" />
+    <TypeScriptCompile Include="interfaces.ts" />
     <TypeScriptCompile Include="Scripts\typings\chrome\chrome-app.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\chrome\chrome-cast.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\chrome\chrome.d.ts" />
