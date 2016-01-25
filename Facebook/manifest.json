@@ -6,7 +6,7 @@
     "background": {
         "scripts": [ "Scripts/jquery-2.2.0.min.js", "entities.js", "background.js" ]
     },
-    "permissions": [ "http://*.facebook.com/*", "https://*.facebook.com/*" ],
+    "permissions": [ "http://*.facebook.com/*", "https://*.facebook.com/*", "webRequest", "webRequestBlocking" ],
     "icons": {
         "48": "favicon.png"
     }
