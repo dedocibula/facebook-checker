@@ -1,0 +1,13 @@
+﻿{
+    "name": "Facebook Notifications by DedoCibula",
+    "version": "2.0",
+    "manifest_version": 2,
+    "description": "Keep up with your friends, even when you're not on Facebook.",
+    "background": {
+        "scripts": [ "Scripts/jquery-2.2.0.min.js", "background.js" ]
+    },
+    "permissions": [ "http://*.facebook.com/*", "https://*.facebook.com/*" ],
+    "icons": {
+        "48": "favicon.png"
+    }
+}
