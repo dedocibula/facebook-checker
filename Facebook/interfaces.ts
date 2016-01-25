@@ -1,7 +1,9 @@
 ﻿module Facebook.Api {
     export interface ILoader {
-        getNotificationsAsync(): Promise<Entities.Notification[]>;
+        getStatusAsync(): Promise<Entities.Status>;
 
-        getMessagesAsync(): Promise<Entities.Message[]>;
+        getNotificationsAsync(token: string): Promise<Entities.Notification[]>;
+
+        getMessagesAsync(token: string): Promise<Entities.Message[]>;
     }
 }
