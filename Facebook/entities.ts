@@ -11,6 +11,12 @@
         }
     }
 
+    export const enum State {
+        Unseen,
+        Unread,
+        Read,
+    }
+
     export const enum Type {
         GroupActivity,
         BirthdayReminder,
@@ -30,38 +36,54 @@
     }
 
     export class Author {
-        public name: string;
+        public fullName: string;
         public profilePicture: string;
+        public shortName: string;
 
-        constructor(name: string, profilePicture: string) {
-            this.name = name;
+        constructor(fullName: string, profilePicture: string, shortName?: string) {
+            this.fullName = fullName;
             this.profilePicture = profilePicture;
+            this.shortName = shortName;
         }
     }
 
-    export class Notification {
+    class FacebookEntity {
         public id: string;
         public text: string;
         public authors: Author[];
-        public type: Type;
+        public state: State;
         public timestamp: string;
         public url: string;
-        public icon: string;
-        public attachment: string;
 
-        constructor(id: string, text: string, authors: Author[], type: Type, timestamp: string, url: string, icon: string, attachment?: string) {
+        constructor(id: string, text: string, authors: Author[], state: State, timestamp: string, url: string) {
             this.id = id;
             this.text = text;
             this.authors = authors;
-            this.type = type;
+            this.state = state;
             this.timestamp = timestamp;
             this.url = url;
+        }
+    }
+
+    export class Notification extends FacebookEntity {
+        public type: Type;
+        public icon: string;
+        public attachment: string;
+
+        constructor(id: string, text: string, authors: Author[], type: Type, state: State, timestamp: string, url: string, icon: string, attachment?: string) {
+            super(id, text, authors, state, timestamp, url);
+            this.type = type;
             this.icon = icon;
             this.attachment = attachment;
         }
     }
 
-    export class Message {
+    export class Message extends FacebookEntity {
+        public header: string;
 
+        constructor(id: string, header: string, text: string, authors: Author[], state: State, timestamp: string, url: string) {
+            super(id, text, authors, state, timestamp, url);
+            this.header = header;
+        }
     }
 }

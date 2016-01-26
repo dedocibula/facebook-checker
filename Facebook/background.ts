@@ -1,7 +1,11 @@
 ﻿module Facebook.Backend {
     interface ISettings {
         baseUrl: string;
+        uriSuffix: string;
         refreshInterval: number;
+        fetchLimit: number;
+        simpleMessagePrefix: string;
+        complexMessagePrefix: string;
     }
 
     class BackgroundWorker {
@@ -21,18 +25,19 @@
     }
 
     class Loader implements Api.ILoader {
-        private static get NOTIFICATION_URI(): string { return "/ajax/notifications/client/get.php?__pc=EXP1%3ADEFAULT"; }
+        private static get NOTIFICATION_URI(): string { return "/ajax/notifications/client/get.php"; }
+        private static get MESSAGE_URI(): string { return "/ajax/mercury/threadlist_info.php"; }
 
-        private baseUrl: string;
+        private settings: ISettings;
 
         constructor(settings: ISettings) {
-            this.baseUrl = settings.baseUrl;
+            this.settings = settings;
         }
 
         public getStatusAsync(): Promise<Entities.Status> {
             return new Promise<Entities.Status>(resolve => {
                 $.ajax({
-                    url: this.baseUrl,
+                    url: this.settings.baseUrl,
                     method: "GET",
                     accepts: "*/*"
                 }).done((result: string) => {
@@ -44,11 +49,11 @@
         public getNotificationsAsync(token: string): Promise<Entities.Notification[]> {
             return new Promise<Entities.Notification[]>(resolve => {
                 $.ajax({
-                    url: this.baseUrl + Loader.NOTIFICATION_URI,
+                    url: this.settings.baseUrl + Loader.NOTIFICATION_URI + this.settings.uriSuffix,
                     method: "POST",
                     accepts: "*/*",
                     dataType: "text",
-                    data: { length: 7, __a: 1, fb_dtsg: token }
+                    data: { length: this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
                     resolve(this.parseNotifications(JSON.parse((result).match(/{.*}/)[0]).payload));
                 });
@@ -56,7 +61,17 @@
         }
 
         public getMessagesAsync(token: string): Promise<Entities.Message[]> {
-            throw new Error("Not implemented");
+            return new Promise<Entities.Message[]>(resolve => {
+                $.ajax({
+                    url: this.settings.baseUrl + Loader.MESSAGE_URI + this.settings.uriSuffix,
+                    method: "POST",
+                    accepts: "*/*",
+                    dataType: "text",
+                    data: { "inbox[offset]": 0, "inbox[limit]": this.settings.fetchLimit, __a: 1, fb_dtsg: token }
+                }).done((result: string) => {
+                    resolve(this.parseMessages(JSON.parse((result).match(/{.*}/)[0]).payload));
+                });
+            });
         }
 
         private parseStatus(result: any): Entities.Status {
@@ -71,21 +86,29 @@
             return (<Array<any>>(json.nodes)).map(notification => {
                 var authors: Entities.Author[] = (<Array<any>>(notification.actors)).map(author => new Entities.Author(author.name, author.profile_picture.uri));
                 var type: Entities.Type = this.parseNotificationType(notification.notif_type);
-
-                var timestamp: string;
-                if (notification.timestamp.text && notification.timestamp.text.length !== 0) {
-                    timestamp = notification.timestamp.text;
-                } else {
-                    var minutes: number = (json.servertime - notification.timestamp.time) / 60;
-                    timestamp = (minutes < 60) ?
-                        `${Math.floor(minutes)} minute${Math.floor(minutes) !== 1 ? "s" : ""} ago` :
-                        `${Math.floor(minutes / 60)} hour${Math.floor(minutes / 60) !== 1 ? "s" : ""} ago`;
-                }
-
+                var state: Entities.State = this.parseNotificationState(notification.seen_state);
+                var timestamp: string = this.formTimestampText(notification.timestamp.text, json.servertime - notification.timestamp.time);
                 var attachment: string = (notification.attachments.length > 0 && notification.attachments[0].media) ?
                     notification.attachments[0].media.image.uri : null;
 
-                return new Entities.Notification(notification.id, notification.title.text, authors, type, timestamp, notification.url, notification.icon.uri, attachment);
+                return new Entities.Notification(notification.id, notification.title.text, authors, type, state, timestamp, notification.url, notification.icon.uri, attachment);
+            });
+        }
+
+        private parseMessages(json: any): Entities.Message[] {
+            var participants: { [id: string]: Entities.Author; } = {};
+            (<Array<any>>(json.participants)).forEach(participant => {
+                participants[participant.id] = new Entities.Author(participant.name, participant.image_src, participant.short_name);
+            });
+            return (<Array<any>>(json.threads)).map(message => {
+                var header: string = message.name.length === 0 ? participants[`fbid:${message.thread_fbid}`].fullName : message.name;
+                var text: string = message.name.length === 0 ? message.snippet : `${participants[message.snippet_sender].shortName}: ${message.snippet}`;
+                var authors: Entities.Author[] = (<Array<string>>(message.participants)).map(participantId => participants[participantId]);
+                var state: Entities.State = message.unread_count === 0 ? Entities.State.Read : Entities.State.Unread;
+                var prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
+                var url: string = this.settings.baseUrl + prefix + message.thread_fbid;
+
+                return new Entities.Message(message.thread_id, header, text, authors, state, message.timestamp_relative, url);
             });
         }
 
@@ -127,11 +150,26 @@
             }
         }
 
-        private retrieveTimestamp(text: string, timeInSeconds: number): string {
+        private parseNotificationState(text: string): Entities.State {
+            switch (text) {
+                case "UNSEEN":
+                    return Entities.State.Unseen;
+                case "SEEN_BUT_UNREAD":
+                    return Entities.State.Unread;
+                case "SEEN_AND_READ":
+                    return Entities.State.Read;
+                default:
+                    return null;
+            }
+        }
+
+        private formTimestampText(text: string, timeInSeconds: number): string {
             if (text && text.length !== 0)
                 return text;
             var minutes: number = Math.floor(timeInSeconds / 60);
-            return (minutes < 60) ? `${Math.floor(minutes)} minutes ago` : `${Math.floor(minutes / 60)} hours ago`;
+            return (minutes < 60) ?
+                `${minutes} minute${minutes !== 1 ? "s" : ""} ago` :
+                `${Math.floor(minutes / 60)} hour${Math.floor(minutes / 60) !== 1 ? "s" : ""} ago`;;
         }
     }
 
@@ -161,7 +199,11 @@
     window.onload = () => {
         var settings: ISettings = {
             baseUrl: "https://www.facebook.com",
-            refreshInterval: 20 * 1000
+            uriSuffix: "?__pc=EXP1%3ADEFAULT",
+            refreshInterval: 20 * 1000,
+            fetchLimit: 7,
+            simpleMessagePrefix: "/messages/",
+            complexMessagePrefix: "/messages/conversation-"
         };
 
         registerListeners(settings);
@@ -169,6 +211,9 @@
         var loader: Api.ILoader = new Loader(settings);
         loader.getStatusAsync().then(status => {
             loader.getNotificationsAsync(status.token).then(result => {
+                console.log(result);
+            });
+            loader.getMessagesAsync(status.token).then(result => {
                 console.log(result);
             });
         });
