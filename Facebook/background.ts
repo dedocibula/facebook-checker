@@ -4,27 +4,34 @@
         uriSuffix: string;
         refreshInterval: number;
         fetchLimit: number;
+        notificationFadeoutDelay: number;
         simpleMessagePrefix: string;
         complexMessagePrefix: string;
+        sound: string;
     }
 
     class BackgroundWorker {
         private settings: ISettings;
         private loader: Api.ILoader;
+        private chrome: ChromeService;
         private timer: number;
+        private sound: HTMLAudioElement;
 
-        constructor(settings: ISettings, loader: Api.ILoader) {
+        constructor(settings: ISettings, loader: Api.ILoader, chrome: ChromeService) {
             this.settings = settings;
             this.loader = loader;
+            this.chrome = chrome;
             this.timer = null;
         }
 
         public start(): void {
-            if (this.timer !== null)
+            if (this.timer)
                 return;
             this.timer = this.executeRepeatedly(() => {
                 this.loader.getStatusAsync().then(status => {
                     var token: string = status.token;
+                    var allCounts: number = status.messageCount + status.notificationCount;
+
                     if (status.messageCount > 0) {
                         this.loader.getMessagesAsync(token).then(messages => {
                             messages.forEach(message => {
@@ -40,12 +47,19 @@
                             });
                         });
                     }
+
+                    if (allCounts > 0) {
+                        this.chrome.updateUnreadCounter(allCounts);
+                        this.playSound();
+                    } else {
+                        this.chrome.updateUnreadCounter(null);
+                    }
                 });
             }, this.settings.refreshInterval);
         }
 
         public stop(): void {
-            if (this.timer === null)
+            if (!this.timer)
                 return;
             clearInterval(this.timer);
             this.timer = null;
@@ -54,6 +68,82 @@
         private executeRepeatedly(action: () => void, interval: number): number {
             action();
             return setInterval(action, interval);
+        }
+
+        private playSound(): void {
+            if (!this.sound)
+                this.sound = new Audio(this.settings.sound);
+            this.sound.play();
+        }
+    }
+
+    class ChromeService {
+        private settings: ISettings;
+        private notifications: { [id: number]: string };
+
+        constructor(settings: ISettings) {
+            this.settings = settings;
+            this.notifications = {};
+        }
+
+        public createDesktopAlert<T extends Entities.FacebookEntity>(entity: T): void {
+            if (chrome && chrome.notifications) {
+                chrome.notifications.create(entity.id, {
+                    type: "basic",
+                    title: `Facebook - New Messages in ${entity.constructor.toString().match(/\w+/g)[1]}`,
+                    message: entity.text,
+                    iconUrl: "images/icon48.png"
+                }, (id) => {
+                    setTimeout(() => {
+                        chrome.notifications.clear(id, () => { });
+                        delete this.notifications[id];
+                    }, this.settings.notificationFadeoutDelay);
+                });
+
+                this.notifications[entity.id] = entity.url;
+            }
+        }
+
+        public updateUnreadCounter(value?: number): void {
+            if (chrome && chrome.browserAction)
+                chrome.browserAction.setBadgeText({ text: value ? value.toString() : "" });
+        }
+
+        private registerListeners(): void {
+            if (chrome && chrome.notifications) {
+                chrome.notifications.onClicked.addListener((id) => {
+                    var url = this.notifications[id];
+                    chrome.tabs.query({ url: url }, (tabs) => {
+                        if (tabs.length > 0)
+                            chrome.tabs.update(tabs[0].id, { url: url, active: true });
+                        else
+                            chrome.tabs.create({ url: url });
+                    });
+                });
+            }
+
+            if (chrome && chrome.webRequest) {
+                chrome.webRequest.onBeforeSendHeaders.addListener(details => {
+                    var headers: chrome.webRequest.HttpHeader[] = details.requestHeaders;
+                    var refererFound: boolean = false, originFound: boolean = false;
+
+                    for (var i = 0; i < headers.length; i++) {
+                        if (headers[i].name === "Referer") {
+                            headers[i].value = this.settings.baseUrl;
+                            refererFound = true;
+                        }
+                        if (headers[i].name === "Origin") {
+                            headers[i].value = this.settings.baseUrl;
+                            originFound = true;
+                        }
+                    }
+
+                    if (!refererFound) headers.push({ name: "Referer", value: this.settings.baseUrl });
+                    if (!originFound) headers.push({ name: "Origin", value: this.settings.baseUrl });
+
+                    return { requestHeaders: headers };
+                }, { urls: ["<all_urls>"] }, ["requestHeaders", "blocking"]);
+            }
         }
     }
 
@@ -234,23 +324,18 @@
             baseUrl: "https://www.facebook.com",
             uriSuffix: "?__pc=EXP1%3ADEFAULT",
             refreshInterval: 20 * 1000,
+            notificationFadeoutDelay: 20 * 1000,
             fetchLimit: 7,
             simpleMessagePrefix: "/messages/",
-            complexMessagePrefix: "/messages/conversation-"
+            complexMessagePrefix: "/messages/conversation-",
+            sound: "chime.ogg"
         };
 
         registerListeners(settings);
 
         var loader: Api.ILoader = new Loader(settings);
-        loader.getStatusAsync().then(status => {
-            loader.getNotificationsAsync(status.token).then(result => {
-                console.log(result);
-            });
-            loader.getMessagesAsync(status.token).then(result => {
-                console.log(result);
-            });
-        });
-        var worker: BackgroundWorker = new BackgroundWorker(settings, loader);
+        var chrome: ChromeService = new ChromeService(settings);
+        var worker: BackgroundWorker = new BackgroundWorker(settings, loader, chrome);
         worker.start();
     };
 }

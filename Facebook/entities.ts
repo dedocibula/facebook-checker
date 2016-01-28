@@ -47,7 +47,7 @@
         }
     }
 
-    class FacebookEntity {
+    export class FacebookEntity {
         public id: string;
         public text: string;
         public authors: Author[];
