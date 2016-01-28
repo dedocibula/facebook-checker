@@ -38,8 +38,12 @@
                         this.loader.getMessagesAsync(token).then(messages => {
                             messages.forEach(message => {
                                 this.playSound();
-                                if (message.state === Entities.State.Unread)
-                                    this.chrome.createDesktopAlert(message.header, message);
+                                if (message.state === Entities.State.Unread) {
+                                    this.loader.getExternalResourceAsync(message.picture).then(localUrl => {
+                                        message.picture = localUrl;
+                                        this.chrome.createDesktopAlert(message.header, message);
+                                    });
+                                }
                             });
                         });
                     } else if (status.notificationCount > 0) {
@@ -47,8 +51,12 @@
                             notifications.forEach(notification => {
                                 this.playSound();
                                 if (notification.state === Entities.State.Unseen ||
-                                    notification.state === Entities.State.Unread)
-                                    this.chrome.createDesktopAlert("New Notification", notification);
+                                    notification.state === Entities.State.Unread) {
+                                    this.loader.getExternalResourceAsync(notification.picture).then(localUrl => {
+                                        notification.picture = localUrl;
+                                        this.chrome.createDesktopAlert("New Notification", notification);
+                                    });
+                                }
                             });
                         });
                     }
@@ -95,7 +103,7 @@
                     title: title,
                     message: entity.text,
                     contextMessage: this.settings.contextMessage,
-                    iconUrl: this.settings.notificationIcon
+                    iconUrl: entity.picture
                 }, (id) => {
                     setTimeout(() => {
                         chrome.notifications.clear(id, () => { });
@@ -157,9 +165,11 @@
         private static get MESSAGE_URI(): string { return "/ajax/mercury/threadlist_info.php"; }
 
         private settings: ISettings;
+        private localResources: { [url: string]: string };
 
         constructor(settings: ISettings) {
             this.settings = settings;
+            this.localResources = {};
         }
 
         public getStatusAsync(): Promise<Entities.Status> {
@@ -202,6 +212,22 @@
             });
         }
 
+        public getExternalResourceAsync(url: string): Promise<string> {
+            return new Promise<string>(resolve => {
+                if (this.localResources[url])
+                    resolve(this.localResources[url]);
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", url);
+                xhr.responseType = "blob";
+                xhr.onload = () => {
+                    this.localResources[url] = window.URL.createObjectURL(xhr.response);
+                    resolve(this.localResources[url]);
+                };
+                xhr.send(null);
+            });
+
+        }
+
         private parseStatus(result: any): Entities.Status {
             var $result: JQuery = $(result);
             var token = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
@@ -219,24 +245,26 @@
                 var attachment: string = (notification.attachments.length > 0 && notification.attachments[0].media) ?
                     notification.attachments[0].media.image.uri : null;
 
-                return new Entities.Notification(notification.id, notification.title.text, authors, type, state, timestamp, notification.url, notification.icon.uri, attachment);
+                return new Entities.Notification(notification.id, notification.title.text, authors, authors[0].profilePicture, type, state, timestamp, notification.url, notification.icon.uri, attachment);
             });
         }
 
         private parseMessages(json: any): Entities.Message[] {
             var participants: { [id: string]: Entities.Author; } = {};
             (<Array<any>>(json.participants)).forEach(participant => {
-                participants[participant.id] = new Entities.Author(participant.name, participant.image_src, participant.short_name);
+                participants[participant.id] = new Entities.Author(participant.name, participant.big_image_src, participant.short_name);
             });
             return (<Array<any>>(json.threads)).map(message => {
-                var header: string = message.name.length === 0 ? participants[`fbid:${message.thread_fbid}`].fullName : message.name;
+                var mainAuthor: Entities.Author = participants[`fbid:${message.thread_fbid}`];
+                var header: string = message.name.length === 0 ? mainAuthor.fullName : message.name;
                 var text: string = message.name.length === 0 ? message.snippet : `${participants[message.snippet_sender].shortName}: ${message.snippet}`;
                 var authors: Entities.Author[] = (<Array<string>>(message.participants)).map(participantId => participants[participantId]);
+                var picture: string = message.name.length === 0 ? mainAuthor.profilePicture : participants[message.snippet_sender].profilePicture;
                 var state: Entities.State = message.unread_count === 0 ? Entities.State.Read : Entities.State.Unread;
                 var prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
                 var url: string = this.settings.baseUrl + prefix + message.thread_fbid;
 
-                return new Entities.Message(message.thread_id, header, text, authors, state, message.timestamp_relative, url);
+                return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.timestamp_relative, url);
             });
         }
 

@@ -51,14 +51,16 @@
         public id: string;
         public text: string;
         public authors: Author[];
+        public picture: string;
         public state: State;
         public timestamp: string;
         public url: string;
 
-        constructor(id: string, text: string, authors: Author[], state: State, timestamp: string, url: string) {
+        constructor(id: string, text: string, authors: Author[], picture: string, state: State, timestamp: string, url: string) {
             this.id = id;
             this.text = text;
             this.authors = authors;
+            this.picture = picture;
             this.state = state;
             this.timestamp = timestamp;
             this.url = url;
@@ -70,8 +72,8 @@
         public icon: string;
         public attachment: string;
 
-        constructor(id: string, text: string, authors: Author[], type: Type, state: State, timestamp: string, url: string, icon: string, attachment?: string) {
-            super(id, text, authors, state, timestamp, url);
+        constructor(id: string, text: string, authors: Author[], picture: string, type: Type, state: State, timestamp: string, url: string, icon: string, attachment?: string) {
+            super(id, text, authors, picture, state, timestamp, url);
             this.type = type;
             this.icon = icon;
             this.attachment = attachment;
@@ -81,8 +83,8 @@
     export class Message extends FacebookEntity {
         public header: string;
 
-        constructor(id: string, header: string, text: string, authors: Author[], state: State, timestamp: string, url: string) {
-            super(id, text, authors, state, timestamp, url);
+        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, timestamp: string, url: string) {
+            super(id, text, authors, picture, state, timestamp, url);
             this.header = header;
         }
     }
