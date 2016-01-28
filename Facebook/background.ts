@@ -11,16 +11,49 @@
     class BackgroundWorker {
         private settings: ISettings;
         private loader: Api.ILoader;
+        private timer: number;
 
         constructor(settings: ISettings, loader: Api.ILoader) {
             this.settings = settings;
             this.loader = loader;
+            this.timer = null;
         }
 
         public start(): void {
-            this.loader.getStatusAsync().then(status => {
-                // TODO
-            });
+            if (this.timer !== null)
+                return;
+            this.timer = this.executeRepeatedly(() => {
+                this.loader.getStatusAsync().then(status => {
+                    var token: string = status.token;
+                    if (status.messageCount > 0) {
+                        this.loader.getMessagesAsync(token).then(messages => {
+                            messages.forEach(message => {
+                                if (message.state === Entities.State.Unread)
+                                    console.log(message);
+                            });
+                        });
+                    } else if (status.notificationCount > 0) {
+                        this.loader.getNotificationsAsync(token).then(notifications => {
+                            notifications.forEach(notification => {
+                                if (notification.state === Entities.State.Unseen || notification.state === Entities.State.Unread)
+                                    console.log(notification);
+                            });
+                        });
+                    }
+                });
+            }, this.settings.refreshInterval);
+        }
+
+        public stop(): void {
+            if (this.timer === null)
+                return;
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+
+        private executeRepeatedly(action: () => void, interval: number): number {
+            action();
+            return setInterval(action, interval);
         }
     }
 
@@ -152,7 +185,7 @@
 
         private parseNotificationState(text: string): Entities.State {
             switch (text) {
-                case "UNSEEN":
+                case "UNSEEN_AND_UNREAD":
                     return Entities.State.Unseen;
                 case "SEEN_BUT_UNREAD":
                     return Entities.State.Unread;
@@ -217,5 +250,7 @@
                 console.log(result);
             });
         });
+        var worker: BackgroundWorker = new BackgroundWorker(settings, loader);
+        worker.start();
     };
 }
