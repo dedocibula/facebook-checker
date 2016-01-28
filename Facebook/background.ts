@@ -8,6 +8,8 @@
         simpleMessagePrefix: string;
         complexMessagePrefix: string;
         sound: string;
+        contextMessage: string;
+        notificationIcon: string;
     }
 
     class BackgroundWorker {
@@ -35,25 +37,23 @@
                     if (status.messageCount > 0) {
                         this.loader.getMessagesAsync(token).then(messages => {
                             messages.forEach(message => {
+                                this.playSound();
                                 if (message.state === Entities.State.Unread)
-                                    console.log(message);
+                                    this.chrome.createDesktopAlert(message.header, message);
                             });
                         });
                     } else if (status.notificationCount > 0) {
                         this.loader.getNotificationsAsync(token).then(notifications => {
                             notifications.forEach(notification => {
-                                if (notification.state === Entities.State.Unseen || notification.state === Entities.State.Unread)
-                                    console.log(notification);
+                                this.playSound();
+                                if (notification.state === Entities.State.Unseen ||
+                                    notification.state === Entities.State.Unread)
+                                    this.chrome.createDesktopAlert("New Notification", notification);
                             });
                         });
                     }
 
-                    if (allCounts > 0) {
-                        this.chrome.updateUnreadCounter(allCounts);
-                        this.playSound();
-                    } else {
-                        this.chrome.updateUnreadCounter(null);
-                    }
+                    this.chrome.updateUnreadCounter(allCounts);
                 });
             }, this.settings.refreshInterval);
         }
@@ -84,15 +84,18 @@
         constructor(settings: ISettings) {
             this.settings = settings;
             this.notifications = {};
+
+            this.registerListeners();
         }
 
-        public createDesktopAlert<T extends Entities.FacebookEntity>(entity: T): void {
+        public createDesktopAlert<T extends Entities.FacebookEntity>(title: string, entity: T): void {
             if (chrome && chrome.notifications) {
                 chrome.notifications.create(entity.id, {
                     type: "basic",
-                    title: `Facebook - New Messages in ${entity.constructor.toString().match(/\w+/g)[1]}`,
+                    title: title,
                     message: entity.text,
-                    iconUrl: "images/icon48.png"
+                    contextMessage: this.settings.contextMessage,
+                    iconUrl: this.settings.notificationIcon
                 }, (id) => {
                     setTimeout(() => {
                         chrome.notifications.clear(id, () => { });
@@ -104,9 +107,9 @@
             }
         }
 
-        public updateUnreadCounter(value?: number): void {
+        public updateUnreadCounter(value: number): void {
             if (chrome && chrome.browserAction)
-                chrome.browserAction.setBadgeText({ text: value ? value.toString() : "" });
+                chrome.browserAction.setBadgeText({ text: value > 0 ? value.toString() : "" });
         }
 
         private registerListeners(): void {
@@ -119,6 +122,8 @@
                         else
                             chrome.tabs.create({ url: url });
                     });
+                    chrome.notifications.clear(id, () => { });
+                    delete this.notifications[id];
                 });
             }
 
@@ -296,42 +301,19 @@
         }
     }
 
-    function registerListeners(settings: ISettings): void {
-        chrome.webRequest.onBeforeSendHeaders.addListener(details => {
-            var headers: chrome.webRequest.HttpHeader[] = details.requestHeaders;
-            var refererFound: boolean = false, originFound: boolean = false;
-
-            for (var i = 0; i < headers.length; i++) {
-                if (headers[i].name === "Referer") {
-                    headers[i].value = settings.baseUrl;
-                    refererFound = true;
-                }
-                if (headers[i].name === "Origin") {
-                    headers[i].value = settings.baseUrl;
-                    originFound = true;
-                }
-            }
-
-            if (!refererFound) headers.push({ name: "Referer", value: settings.baseUrl });
-            if (!originFound) headers.push({ name: "Origin", value: settings.baseUrl });
-
-            return { requestHeaders: headers };
-        }, { urls: ["<all_urls>"] }, ["requestHeaders", "blocking"]);
-    }
-
     window.onload = () => {
         var settings: ISettings = {
             baseUrl: "https://www.facebook.com",
             uriSuffix: "?__pc=EXP1%3ADEFAULT",
             refreshInterval: 20 * 1000,
-            notificationFadeoutDelay: 20 * 1000,
+            notificationFadeoutDelay: 10 * 1000,
             fetchLimit: 7,
             simpleMessagePrefix: "/messages/",
             complexMessagePrefix: "/messages/conversation-",
-            sound: "chime.ogg"
+            sound: "chime.ogg",
+            contextMessage: "www.facebook.com",
+            notificationIcon: "Images/icon48.png"
         };
-
-        registerListeners(settings);
 
         var loader: Api.ILoader = new Loader(settings);
         var chrome: ChromeService = new ChromeService(settings);
