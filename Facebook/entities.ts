@@ -3,11 +3,13 @@
         public token: string;
         public notificationCount: number;
         public messageCount: number;
+        public profileUrl: string;
 
-        constructor(token: string, notificationCount: number, messageCount: number) {
+        constructor(token: string, notificationCount: number, messageCount: number, profileUrl: string) {
             this.token = token;
             this.notificationCount = notificationCount;
             this.messageCount = messageCount;
+            this.profileUrl = profileUrl;
         }
     }
 

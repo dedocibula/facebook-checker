@@ -4,7 +4,7 @@
 
         getNotificationsAsync(token: string): Promise<Entities.Notification[]>;
 
-        getMessagesAsync(token: string): Promise<Entities.Message[]>;
+        getMessagesAsync(token: string, profileUrl: string): Promise<Entities.Message[]>;
 
         getExternalResourceAsync(url: string): Promise<string>;
     }

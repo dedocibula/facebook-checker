@@ -32,10 +32,11 @@
             this.timer = this.executeRepeatedly(() => {
                 this.loader.getStatusAsync().then(status => {
                     var token: string = status.token;
+                    var profileUrl: string = status.profileUrl;
                     var allCounts: number = status.messageCount + status.notificationCount;
 
                     if (status.messageCount > 0) {
-                        this.loader.getMessagesAsync(token).then(messages => {
+                        this.loader.getMessagesAsync(token, profileUrl).then(messages => {
                             messages.forEach(message => {
                                 this.playSound();
                                 if (message.state === Entities.State.Unread) {
@@ -198,7 +199,7 @@
             });
         }
 
-        public getMessagesAsync(token: string): Promise<Entities.Message[]> {
+        public getMessagesAsync(token: string, profileUrl: string): Promise<Entities.Message[]> {
             return new Promise<Entities.Message[]>(resolve => {
                 $.ajax({
                     url: this.settings.baseUrl + Loader.MESSAGE_URI + this.settings.uriSuffix,
@@ -207,7 +208,7 @@
                     dataType: "text",
                     data: { "inbox[offset]": 0, "inbox[limit]": this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
-                    resolve(this.parseMessages(JSON.parse((result).match(/{.*}/)[0]).payload));
+                    resolve(this.parseMessages(JSON.parse((result).match(/{.*}/)[0]).payload, profileUrl));
                 });
             });
         }
@@ -225,15 +226,16 @@
                 };
                 xhr.send(null);
             });
-
         }
 
         private parseStatus(result: any): Entities.Status {
             var $result: JQuery = $(result);
-            var token = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
-            var notificationsCount = parseInt($(result).find("#notificationsCountValue").text());
-            var messageCount = parseInt($result.find("#mercurymessagesCountValue").text());
-            return new Entities.Status(token, notificationsCount, messageCount);
+            var token: string = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
+            var notificationsCount: number = parseInt($(result).find("#notificationsCountValue").text());
+            var messageCount: number = parseInt($result.find("#mercurymessagesCountValue").text());
+            var profileUrl: string = (<HTMLLinkElement>$result.find("a[title='Profile']")[0]).href;
+
+            return new Entities.Status(token, notificationsCount, messageCount, profileUrl);
         }
 
         private parseNotifications(json: any): Entities.Notification[] {
@@ -249,17 +251,19 @@
             });
         }
 
-        private parseMessages(json: any): Entities.Message[] {
+        private parseMessages(json: any, profileUrl: string): Entities.Message[] {
             var participants: { [id: string]: Entities.Author; } = {};
+            var userId: string;
             (<Array<any>>(json.participants)).forEach(participant => {
                 participants[participant.id] = new Entities.Author(participant.name, participant.big_image_src, participant.short_name);
+                if (participant.href === profileUrl)
+                    userId = participant.id;
             });
             return (<Array<any>>(json.threads)).map(message => {
-                var mainAuthor: Entities.Author = participants[`fbid:${message.thread_fbid}`];
-                var header: string = message.name.length === 0 ? mainAuthor.fullName : message.name;
-                var text: string = message.name.length === 0 ? message.snippet : `${participants[message.snippet_sender].shortName}: ${message.snippet}`;
-                var authors: Entities.Author[] = (<Array<string>>(message.participants)).map(participantId => participants[participantId]);
-                var picture: string = message.name.length === 0 ? mainAuthor.profilePicture : participants[message.snippet_sender].profilePicture;
+                var authors: Entities.Author[] = (<Array<string>>(message.participants)).filter(participantId => participantId !== userId).map(participantId => participants[participantId]);
+                var header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
+                var text: string = authors.length === 1 ? message.snippet : `${participants[message.snippet_sender].shortName}: ${message.snippet}`;
+                var picture: string = message.name.length === 0 ? authors[0].profilePicture : participants[message.snippet_sender].profilePicture;
                 var state: Entities.State = message.unread_count === 0 ? Entities.State.Read : Entities.State.Unread;
                 var prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
                 var url: string = this.settings.baseUrl + prefix + message.thread_fbid;
