@@ -19,11 +19,15 @@
         private timer: number;
         private sound: HTMLAudioElement;
 
+        private unread: { [key: string]: string };
+
         constructor(settings: ISettings, loader: Api.ILoader, chrome: ChromeService) {
             this.settings = settings;
             this.loader = loader;
             this.chrome = chrome;
             this.timer = null;
+
+            this.unread = {};
         }
 
         public start(): void {
@@ -38,26 +42,20 @@
                     if (status.messageCount > 0) {
                         this.loader.getMessagesAsync(token, profileUrl).then(messages => {
                             messages.forEach(message => {
-                                this.playSound();
-                                if (message.state === Entities.State.Unread) {
-                                    this.loader.getExternalResourceAsync(message.picture).then(localUrl => {
-                                        message.picture = localUrl;
-                                        this.chrome.createDesktopAlert(message.header, message);
-                                    });
-                                }
+                                if (message.state === Entities.State.Unread)
+                                    this.notifyOnce(message.header, message);
+                                else
+                                    delete this.unread[message.id];
                             });
                         });
                     } else if (status.notificationCount > 0) {
                         this.loader.getNotificationsAsync(token).then(notifications => {
                             notifications.forEach(notification => {
-                                this.playSound();
                                 if (notification.state === Entities.State.Unseen ||
-                                    notification.state === Entities.State.Unread) {
-                                    this.loader.getExternalResourceAsync(notification.picture).then(localUrl => {
-                                        notification.picture = localUrl;
-                                        this.chrome.createDesktopAlert("New Notification", notification);
-                                    });
-                                }
+                                    notification.state === Entities.State.Unread)
+                                    this.notifyOnce("New Notification", notification);
+                                else
+                                    delete this.unread[notification.id];
                             });
                         });
                     }
@@ -83,6 +81,17 @@
             if (!this.sound)
                 this.sound = new Audio(this.settings.sound);
             this.sound.play();
+        }
+
+        private notifyOnce<T extends Entities.FacebookEntity>(title: string, entity: T): void {
+            if (entity.text === this.unread[entity.id])
+                return;
+            this.loader.getExternalResourceAsync(entity.picture).then(localUrl => {
+                entity.picture = localUrl;
+                this.chrome.createDesktopAlert(title, entity);
+            });
+            this.playSound();
+            this.unread[entity.id] = entity.text;
         }
     }
 
@@ -214,6 +223,7 @@
         }
 
         public getExternalResourceAsync(url: string): Promise<string> {
+            // TODO only on success
             return new Promise<string>(resolve => {
                 if (this.localResources[url])
                     resolve(this.localResources[url]);
@@ -229,6 +239,7 @@
         }
 
         private parseStatus(result: any): Entities.Status {
+            // TODO better counts
             var $result: JQuery = $(result);
             var token: string = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
             var notificationsCount: number = parseInt($(result).find("#notificationsCountValue").text());
@@ -239,6 +250,7 @@
         }
 
         private parseNotifications(json: any): Entities.Notification[] {
+            // TODO try catch + handling
             return (<Array<any>>(json.nodes)).map(notification => {
                 var authors: Entities.Author[] = (<Array<any>>(notification.actors)).map(author => new Entities.Author(author.name, author.profile_picture.uri));
                 var type: Entities.Type = this.parseNotificationType(notification.notif_type);
@@ -252,6 +264,7 @@
         }
 
         private parseMessages(json: any, profileUrl: string): Entities.Message[] {
+            // TODO try catch + handling
             var participants: { [id: string]: Entities.Author; } = {};
             var userId: string;
             (<Array<any>>(json.participants)).forEach(participant => {
