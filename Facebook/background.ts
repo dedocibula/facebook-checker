@@ -131,15 +131,15 @@
         }
 
         private registerListeners(): void {
+            if (chrome && chrome.browserAction) {
+                chrome.browserAction.onClicked.addListener(() => {
+                    this.createOrUpdateTab(`${this.settings.baseUrl}/`);
+                });
+            }
+
             if (chrome && chrome.notifications) {
                 chrome.notifications.onClicked.addListener((id) => {
-                    var url = this.notifications[id];
-                    chrome.tabs.query({ url: url }, (tabs) => {
-                        if (tabs.length > 0)
-                            chrome.tabs.update(tabs[0].id, { url: url, active: true });
-                        else
-                            chrome.tabs.create({ url: url });
-                    });
+                    this.createOrUpdateTab(this.notifications[id]);
                     chrome.notifications.clear(id, () => { });
                     delete this.notifications[id];
                 });
@@ -166,6 +166,17 @@
 
                     return { requestHeaders: headers };
                 }, { urls: ["<all_urls>"] }, ["requestHeaders", "blocking"]);
+            }
+        }
+
+        private createOrUpdateTab(url: string): void {
+            if (chrome && chrome.tabs) {
+                chrome.tabs.query({ url: url }, (tabs) => {
+                    if (tabs.length > 0)
+                        chrome.tabs.update(tabs[0].id, { url: url, active: true });
+                    else
+                        chrome.tabs.create({ url: url });
+                });
             }
         }
     }
