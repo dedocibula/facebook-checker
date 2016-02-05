@@ -53,11 +53,11 @@
                         }
 
                         this.chrome.updateUnreadCounter(allCounts);
-                    }, (error: Error) => {
-                        if (error.message === "rejected")
-                            this.status = null;
+                    }, (error: any) => {
+                        this.status = null;
+                        console.error(error.stack);
                     });
-                }, () => { });
+                }, (error: any) => { console.error(error.stack) });
             }, this.settings.refreshInterval);
         }
 
@@ -216,7 +216,11 @@
                     dataType: "text",
                     data: { length: this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
-                    resolve(this.parseNotifications(JSON.parse((result).match(/{.*}/)[0]).payload));
+                    const payload = JSON.parse((result).match(/{.*}/)[0]).payload;
+                    if (payload)
+                        resolve(this.parseNotifications(payload));
+                    else
+                        reject(new Error("illegal_token"));
                 }).fail((jqXhr: JQueryXHR) => {
                     reject(new Error(jqXhr.state()));
                 });
@@ -232,7 +236,11 @@
                     dataType: "text",
                     data: { "inbox[offset]": 0, "inbox[limit]": this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
-                    resolve(this.parseMessages(JSON.parse((result).match(/{.*}/)[0]).payload, profileUrl));
+                    const payload = JSON.parse((result).match(/{.*}/)[0]).payload;
+                    if (payload)
+                        resolve(this.parseMessages(payload, profileUrl));
+                    else
+                        reject(new Error("illegal_token"));
                 }).fail((jqXhr: JQueryXHR) => {
                     reject(new Error(jqXhr.state()));
                 });
@@ -240,7 +248,6 @@
         }
 
         public getExternalResourceAsync(url: string): Promise<string> {
-            // TODO only on success
             return new Promise<string>(resolve => {
                 if (this.localResources[url])
                     resolve(this.localResources[url]);
@@ -260,18 +267,13 @@
         }
 
         private parseStatus(result: any): Entities.Status {
-            // TODO better counts
-            const $result: JQuery = $(result);
             const token: string = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
-            const notificationsCount: number = parseInt($(result).find("#notificationsCountValue").text());
-            const messageCount: number = parseInt($result.find("#mercurymessagesCountValue").text());
-            const profileUrl: string = ($result.find("a[title='Profile']")[0] as HTMLLinkElement).href;
+            const profileUrl: string = ($(result).find("a[title='Profile']")[0] as HTMLLinkElement).href;
 
-            return new Entities.Status(token, notificationsCount, messageCount, profileUrl);
+            return new Entities.Status(token, profileUrl);
         }
 
         private parseNotifications(json: any): Entities.Notification[] {
-            // TODO try catch + handling
             return (json.nodes as Array<any>).map(notification => {
                 const authors: Entities.Author[] = (notification.actors as Array<any>).map(author => new Entities.Author(author.name, author.profile_picture.uri));
                 const type: Entities.Type = this.parseNotificationType(notification.notif_type);
@@ -285,7 +287,6 @@
         }
 
         private parseMessages(json: any, profileUrl: string): Entities.Message[] {
-            // TODO try catch + handling
             const participants: { [id: string]: Entities.Author; } = {};
             let userId: string;
             for (let participant of json.participants) {
