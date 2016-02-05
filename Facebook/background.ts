@@ -1,4 +1,4 @@
-﻿module Facebook.Backend {
+﻿namespace Facebook.Backend {
     interface ISettings {
         baseUrl: string;
         uriSuffix: string;
@@ -19,8 +19,7 @@
         private timer: number;
         private sound: HTMLAudioElement;
 
-        private token: string;
-        private profileUrl: string;
+        private status: Entities.Status;
         private unread: { [key: string]: string };
 
         constructor(settings: ISettings, loader: Api.ILoader, chrome: ChromeService) {
@@ -35,18 +34,15 @@
         public start(): void {
             if (this.timer)
                 return;
-            this.loader.getStatusAsync().then(status => {
-                this.token = status.token;
-                this.profileUrl = status.profileUrl;
-
-                this.timer = this.executeRepeatedly(() => {
+            this.timer = this.executeRepeatedly(() => {
+                this.lazyStatus.then(status => {
                     Promise.all<Entities.FacebookEntity[]>([
-                        this.loader.getMessagesAsync(this.token, this.profileUrl),
-                        this.loader.getNotificationsAsync(this.token)
+                        this.loader.getMessagesAsync(status.token, status.profileUrl),
+                        this.loader.getNotificationsAsync(status.token)
                     ]).then(entities => {
-                        var allCounts: number = 0;
+                        let allCounts: number = 0;
 
-                        entities.reduce((previous, next) => previous.concat(next)).forEach(entity => {
+                        for (let entity of entities.reduce((previous, next) => previous.concat(next))) {
                             if (entity.state === Entities.State.Unseen ||
                                 entity.state === Entities.State.Unread) {
                                 allCounts++;
@@ -54,14 +50,15 @@
                             } else {
                                 delete this.unread[entity.id];
                             }
-                        });
+                        }
 
                         this.chrome.updateUnreadCounter(allCounts);
-                    }, () => {
-                        this.loader.getStatusAsync().then(newStatus => this.token = newStatus.token);
+                    }, (error: Error) => {
+                        if (error.message === "rejected")
+                            this.status = null;
                     });
-                }, this.settings.refreshInterval);
-            });
+                }, () => { });
+            }, this.settings.refreshInterval);
         }
 
         public stop(): void {
@@ -74,6 +71,10 @@
         private executeRepeatedly(action: () => void, interval: number): number {
             action();
             return setInterval(action, interval);
+        }
+
+        private get lazyStatus(): Promise<Entities.Status> {
+            return this.status ? Promise.resolve(this.status) : this.loader.getStatusAsync().then(status => this.status = status);
         }
 
         private notifyOnce<T extends Entities.FacebookEntity>(title: string, entity: T): void {
@@ -149,13 +150,13 @@
                     var headers: chrome.webRequest.HttpHeader[] = details.requestHeaders;
                     var refererFound: boolean = false, originFound: boolean = false;
 
-                    for (var i = 0; i < headers.length; i++) {
-                        if (headers[i].name === "Referer") {
-                            headers[i].value = this.settings.baseUrl;
+                    for (let header of headers) {
+                        if (header.name === "Referer") {
+                            header.value = this.settings.baseUrl;
                             refererFound = true;
                         }
-                        if (headers[i].name === "Origin") {
-                            headers[i].value = this.settings.baseUrl;
+                        if (header.name === "Origin") {
+                            header.value = this.settings.baseUrl;
                             originFound = true;
                         }
                     }
@@ -200,8 +201,8 @@
                     accepts: "*/*"
                 }).done((result: string) => {
                     resolve(this.parseStatus(result.replace(/<img\b[^>]*>/ig, "")));
-                }).fail(() => {
-                    reject([]);
+                }).fail((jqXhr: JQueryXHR) => {
+                    reject(new Error(jqXhr.state()));
                 });
             });
         }
@@ -216,8 +217,8 @@
                     data: { length: this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
                     resolve(this.parseNotifications(JSON.parse((result).match(/{.*}/)[0]).payload));
-                }).fail(() => {
-                    reject([]);
+                }).fail((jqXhr: JQueryXHR) => {
+                    reject(new Error(jqXhr.state()));
                 });
             });
         }
@@ -232,8 +233,8 @@
                     data: { "inbox[offset]": 0, "inbox[limit]": this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
                     resolve(this.parseMessages(JSON.parse((result).match(/{.*}/)[0]).payload, profileUrl));
-                }).fail(() => {
-                    reject([]);
+                }).fail((jqXhr: JQueryXHR) => {
+                    reject(new Error(jqXhr.state()));
                 });
             });
         }
@@ -243,12 +244,16 @@
             return new Promise<string>(resolve => {
                 if (this.localResources[url])
                     resolve(this.localResources[url]);
-                var xhr = new XMLHttpRequest();
+                const xhr = new XMLHttpRequest();
                 xhr.open("GET", url);
                 xhr.responseType = "blob";
                 xhr.onload = () => {
-                    this.localResources[url] = window.URL.createObjectURL(xhr.response);
-                    resolve(this.localResources[url]);
+                    if (xhr.status === 200) {
+                        this.localResources[url] = window.URL.createObjectURL(xhr.response);
+                        resolve(this.localResources[url]);
+                    } else {
+                        resolve(this.settings.notificationIcon);
+                    }
                 };
                 xhr.send(null);
             });
@@ -256,23 +261,23 @@
 
         private parseStatus(result: any): Entities.Status {
             // TODO better counts
-            var $result: JQuery = $(result);
-            var token: string = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
-            var notificationsCount: number = parseInt($(result).find("#notificationsCountValue").text());
-            var messageCount: number = parseInt($result.find("#mercurymessagesCountValue").text());
-            var profileUrl: string = (<HTMLLinkElement>$result.find("a[title='Profile']")[0]).href;
+            const $result: JQuery = $(result);
+            const token: string = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
+            const notificationsCount: number = parseInt($(result).find("#notificationsCountValue").text());
+            const messageCount: number = parseInt($result.find("#mercurymessagesCountValue").text());
+            const profileUrl: string = ($result.find("a[title='Profile']")[0] as HTMLLinkElement).href;
 
             return new Entities.Status(token, notificationsCount, messageCount, profileUrl);
         }
 
         private parseNotifications(json: any): Entities.Notification[] {
             // TODO try catch + handling
-            return (<Array<any>>(json.nodes)).map(notification => {
-                var authors: Entities.Author[] = (<Array<any>>(notification.actors)).map(author => new Entities.Author(author.name, author.profile_picture.uri));
-                var type: Entities.Type = this.parseNotificationType(notification.notif_type);
-                var state: Entities.State = this.parseNotificationState(notification.seen_state);
-                var timestamp: string = this.formTimestampText(notification.timestamp.text, json.servertime - notification.timestamp.time);
-                var attachment: string = (notification.attachments.length > 0 && notification.attachments[0].media) ?
+            return (json.nodes as Array<any>).map(notification => {
+                const authors: Entities.Author[] = (notification.actors as Array<any>).map(author => new Entities.Author(author.name, author.profile_picture.uri));
+                const type: Entities.Type = this.parseNotificationType(notification.notif_type);
+                const state: Entities.State = this.parseNotificationState(notification.seen_state);
+                const timestamp: string = this.formTimestampText(notification.timestamp.text, json.servertime - notification.timestamp.time);
+                const attachment: string = (notification.attachments.length > 0 && notification.attachments[0].media) ?
                     notification.attachments[0].media.image.uri : null;
 
                 return new Entities.Notification(notification.id, notification.title.text, authors, authors[0].profilePicture, type, state, timestamp, notification.url, notification.icon.uri, attachment);
@@ -281,21 +286,21 @@
 
         private parseMessages(json: any, profileUrl: string): Entities.Message[] {
             // TODO try catch + handling
-            var participants: { [id: string]: Entities.Author; } = {};
-            var userId: string;
-            (<Array<any>>(json.participants)).forEach(participant => {
+            const participants: { [id: string]: Entities.Author; } = {};
+            let userId: string;
+            for (let participant of json.participants) {
                 participants[participant.id] = new Entities.Author(participant.name, participant.big_image_src, participant.short_name);
                 if (participant.href === profileUrl)
                     userId = participant.id;
-            });
-            return (<Array<any>>(json.threads)).map(message => {
-                var authors: Entities.Author[] = (<Array<string>>(message.participants)).filter(participantId => participantId !== userId).map(participantId => participants[participantId]);
-                var header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
-                var text: string = authors.length === 1 ? message.snippet : `${participants[message.snippet_sender].shortName}: ${message.snippet}`;
-                var picture: string = message.name.length === 0 ? authors[0].profilePicture : participants[message.snippet_sender].profilePicture;
-                var state: Entities.State = message.unread_count === 0 ? Entities.State.Read : Entities.State.Unread;
-                var prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
-                var url: string = this.settings.baseUrl + prefix + message.thread_fbid;
+            }
+            return (json.threads as Array<any>).map(message => {
+                const authors: Entities.Author[] = (message.participants as Array<string>).filter(participantId => participantId !== userId).map(participantId => participants[participantId]);
+                const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
+                const text: string = authors.length === 1 ? message.snippet : `${participants[message.snippet_sender].shortName}: ${message.snippet}`;
+                const picture: string = message.name.length === 0 ? authors[0].profilePicture : participants[message.snippet_sender].profilePicture;
+                const state: Entities.State = message.unread_count === 0 ? Entities.State.Read : Entities.State.Unread;
+                const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
+                const url: string = this.settings.baseUrl + prefix + message.thread_fbid;
 
                 return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.timestamp_relative, url);
             });
@@ -358,7 +363,7 @@
             var minutes: number = Math.floor(timeInSeconds / 60);
             return (minutes < 60) ?
                 `${minutes} minute${minutes !== 1 ? "s" : ""} ago` :
-                `${Math.floor(minutes / 60)} hour${Math.floor(minutes / 60) !== 1 ? "s" : ""} ago`;;
+                `${Math.floor(minutes / 60)} hour${Math.floor(minutes / 60) !== 1 ? "s" : ""} ago`;
         }
     }
 

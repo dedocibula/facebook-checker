@@ -1,4 +1,4 @@
-﻿module Facebook.Entities {
+﻿namespace Facebook.Entities {
     export class Status {
         public token: string;
         public notificationCount: number;
@@ -16,7 +16,7 @@
     export const enum State {
         Unseen,
         Unread,
-        Read,
+        Read
     }
 
     export const enum Type {
@@ -49,7 +49,7 @@
         }
     }
 
-    export class FacebookEntity {
+    export abstract class FacebookEntity {
         public id: string;
         public text: string;
         public authors: Author[];

@@ -1,4 +1,4 @@
-﻿module Facebook.Api {
+﻿namespace Facebook.Api {
     export interface ILoader {
         getStatusAsync(): Promise<Entities.Status>;
 
