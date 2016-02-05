@@ -33,36 +33,31 @@
         public start(): void {
             if (this.timer)
                 return;
-            this.timer = this.executeRepeatedly(() => {
-                this.loader.getStatusAsync().then(status => {
+            this.loader.getStatusAsync().then(status => {
+                this.timer = this.executeRepeatedly(() => {
                     var token: string = status.token;
                     var profileUrl: string = status.profileUrl;
-                    var allCounts: number = status.messageCount + status.notificationCount;
 
-                    if (status.messageCount > 0) {
-                        this.loader.getMessagesAsync(token, profileUrl).then(messages => {
-                            messages.forEach(message => {
-                                if (message.state === Entities.State.Unread)
-                                    this.notifyOnce(message.header, message);
-                                else
-                                    delete this.unread[message.id];
-                            });
-                        });
-                    } else if (status.notificationCount > 0) {
-                        this.loader.getNotificationsAsync(token).then(notifications => {
-                            notifications.forEach(notification => {
-                                if (notification.state === Entities.State.Unseen ||
-                                    notification.state === Entities.State.Unread)
-                                    this.notifyOnce("New Notification", notification);
-                                else
-                                    delete this.unread[notification.id];
-                            });
-                        });
-                    }
+                    Promise.all<Entities.FacebookEntity[]>([
+                        this.loader.getMessagesAsync(token, profileUrl),
+                        this.loader.getNotificationsAsync(token)
+                    ]).then(entities => {
+                        var allCounts: number = 0;
 
-                    this.chrome.updateUnreadCounter(allCounts);
-                });
-            }, this.settings.refreshInterval);
+                        entities.reduce((previous, next) => previous.concat(next)).forEach(entity => {
+                            if (entity.state === Entities.State.Unseen ||
+                                entity.state === Entities.State.Unread) {
+                                allCounts++;
+                                this.notifyOnce(entity instanceof Entities.Message ? entity.header : "New Notification", entity);
+                            } else {
+                                delete this.unread[entity.id];
+                            }
+                        });
+
+                        this.chrome.updateUnreadCounter(allCounts);
+                    });
+                }, this.settings.refreshInterval);
+            });
         }
 
         public stop(): void {
@@ -77,12 +72,6 @@
             return setInterval(action, interval);
         }
 
-        private playSound(): void {
-            if (!this.sound)
-                this.sound = new Audio(this.settings.sound);
-            this.sound.play();
-        }
-
         private notifyOnce<T extends Entities.FacebookEntity>(title: string, entity: T): void {
             if (entity.text === this.unread[entity.id])
                 return;
@@ -92,6 +81,12 @@
             });
             this.playSound();
             this.unread[entity.id] = entity.text;
+        }
+
+        private playSound(): void {
+            if (!this.sound)
+                this.sound = new Audio(this.settings.sound);
+            this.sound.play();
         }
     }
 
