@@ -19,6 +19,8 @@
         private timer: number;
         private sound: HTMLAudioElement;
 
+        private token: string;
+        private profileUrl: string;
         private unread: { [key: string]: string };
 
         constructor(settings: ISettings, loader: Api.ILoader, chrome: ChromeService) {
@@ -34,13 +36,13 @@
             if (this.timer)
                 return;
             this.loader.getStatusAsync().then(status => {
-                this.timer = this.executeRepeatedly(() => {
-                    var token: string = status.token;
-                    var profileUrl: string = status.profileUrl;
+                this.token = status.token;
+                this.profileUrl = status.profileUrl;
 
+                this.timer = this.executeRepeatedly(() => {
                     Promise.all<Entities.FacebookEntity[]>([
-                        this.loader.getMessagesAsync(token, profileUrl),
-                        this.loader.getNotificationsAsync(token)
+                        this.loader.getMessagesAsync(this.token, this.profileUrl),
+                        this.loader.getNotificationsAsync(this.token)
                     ]).then(entities => {
                         var allCounts: number = 0;
 
@@ -55,6 +57,8 @@
                         });
 
                         this.chrome.updateUnreadCounter(allCounts);
+                    }, () => {
+                        this.loader.getStatusAsync().then(newStatus => this.token = newStatus.token);
                     });
                 }, this.settings.refreshInterval);
             });
@@ -189,19 +193,21 @@
         }
 
         public getStatusAsync(): Promise<Entities.Status> {
-            return new Promise<Entities.Status>(resolve => {
+            return new Promise<Entities.Status>((resolve, reject) => {
                 $.ajax({
                     url: this.settings.baseUrl,
                     method: "GET",
                     accepts: "*/*"
                 }).done((result: string) => {
                     resolve(this.parseStatus(result.replace(/<img\b[^>]*>/ig, "")));
+                }).fail(() => {
+                    reject([]);
                 });
             });
         }
 
         public getNotificationsAsync(token: string): Promise<Entities.Notification[]> {
-            return new Promise<Entities.Notification[]>(resolve => {
+            return new Promise<Entities.Notification[]>((resolve, reject) => {
                 $.ajax({
                     url: this.settings.baseUrl + Loader.NOTIFICATION_URI + this.settings.uriSuffix,
                     method: "POST",
@@ -210,12 +216,14 @@
                     data: { length: this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
                     resolve(this.parseNotifications(JSON.parse((result).match(/{.*}/)[0]).payload));
+                }).fail(() => {
+                    reject([]);
                 });
             });
         }
 
         public getMessagesAsync(token: string, profileUrl: string): Promise<Entities.Message[]> {
-            return new Promise<Entities.Message[]>(resolve => {
+            return new Promise<Entities.Message[]>((resolve, reject) => {
                 $.ajax({
                     url: this.settings.baseUrl + Loader.MESSAGE_URI + this.settings.uriSuffix,
                     method: "POST",
@@ -224,6 +232,8 @@
                     data: { "inbox[offset]": 0, "inbox[limit]": this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
                     resolve(this.parseMessages(JSON.parse((result).match(/{.*}/)[0]).payload, profileUrl));
+                }).fail(() => {
+                    reject([]);
                 });
             });
         }
