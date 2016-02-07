@@ -12,14 +12,14 @@
         notificationIcon: string;
     }
 
-    class BackgroundWorker {
+    class BackgroundWorker implements Api.IBackendService {
         private settings: ISettings;
         private loader: Api.ILoader;
         private chrome: ChromeService;
         private timer: number;
         private sound: HTMLAudioElement;
 
-        private status: Entities.Status;
+        private info: Entities.FacebookInfo;
         private unread: { [key: string]: string };
 
         constructor(settings: ISettings, loader: Api.ILoader, chrome: ChromeService) {
@@ -31,25 +31,22 @@
             this.unread = {};
         }
 
-        public start(): void {
+        public start(onFirst?: (response: Entities.Response) => void): void {
             if (this.timer)
                 return;
-            this.timer = this.executeRepeatedly(() => {
-                this.getLazyStatus().then(status => {
-                    Promise.all<Entities.FacebookEntity[]>([
-                        this.loader.getMessagesAsync(status.token, status.profileUrl),
-                        this.loader.getNotificationsAsync(status.token)
-                    ]).then(entities => {
-                        status.messageCount = this.processNewEntities(entities[0]);
-                        status.notificationCount = this.processNewEntities(entities[1]);
-
-                        this.chrome.updateUnreadCounter(status.messageCount + status.notificationCount);
-                    }, (error: any) => {
-                        this.status = null;
-                        console.error(error.stack);
-                    });
-                }, (error: any) => { console.error(error.stack) });
+            this.reloadAll().then(response => {
+                if (onFirst)
+                    onFirst(response);
+                this.processResponse(response);
+            });
+            this.timer = setInterval(() => {
+                this.reloadAll().then(response => this.processResponse(response));
             }, this.settings.refreshInterval);
+        }
+
+        public fetchAll(onReady?: (response: Entities.Response) => void): void {
+            this.stop();
+            this.start(typeof onReady === "function" ? onReady : null);
         }
 
         public stop(): void {
@@ -59,29 +56,53 @@
             this.timer = null;
         }
 
-        private executeRepeatedly(action: () => void, interval: number): number {
-            action();
-            return setInterval(action, interval);
+        private reloadAll(): Promise<Entities.Response> {
+            return new Promise<Entities.Response>(resolve => {
+                (this.info ? Promise.resolve(this.info) : this.loader.getInfoAsync()).then(info => {
+                    this.info = info;
+                    Promise.all<Entities.FacebookEntity[]>([
+                        this.loader.getNotificationsAsync(info.token),
+                        this.loader.getMessagesAsync(info.token, info.profileUrl)
+                    ]).then(entities => {
+                        const newNotifications: number = entities[0].filter(entity => entity.state !== Entities.State.Read).length;
+                        const newMessages: number = entities[1].filter(entity => entity.state !== Entities.State.Read).length;
+
+                        resolve(new Entities.Response(Entities.ResponseType.Ok, newNotifications, newMessages,
+                            (entities[0] as Entities.Notification[]), (entities[1] as Entities.Message[])));
+                    }, (error: any) => {
+                        this.info = null;
+                        console.error(error.stack);
+
+                        resolve(new Entities.Response((Entities.ResponseType as any)[error.message]));
+                    });
+                }, (error: any) => {
+                    console.error(error.stack);
+
+                    resolve(new Entities.Response(Entities.ResponseType.ConnectionRejected));
+                });
+            });
         }
 
-        private getLazyStatus(): Promise<Entities.Status> {
-            return this.status ? Promise.resolve(this.status) : this.loader.getStatusAsync().then(status => this.status = status);
-        }
+        private processResponse(response: Entities.Response): void {
+            if (response.type !== Entities.ResponseType.Ok)
+                return;
 
-        private processNewEntities(entities: Entities.FacebookEntity[]): number {
-            let newEntities: number = 0;
-
-            for (let entity of entities) {
-                if (entity.state === Entities.State.Unseen ||
-                    entity.state === Entities.State.Unread) {
-                    newEntities++;
+            for (let entity of response.messages) {
+                if (entity.state === Entities.State.Unread)
                     this.notifyOnce(entity);
-                } else {
+                else
                     delete this.unread[entity.id];
-                }
             }
 
-            return newEntities;
+            for (let entity of response.notifications) {
+                if (entity.state === Entities.State.Unseen ||
+                    entity.state === Entities.State.Unread)
+                    this.notifyOnce(entity);
+                else
+                    delete this.unread[entity.id];
+            }
+
+            this.chrome.updateUnreadCounter(response.newMessages + response.newNotifications);
         }
 
         private notifyOnce(entity: Entities.FacebookEntity): void {
@@ -109,8 +130,6 @@
         constructor(settings: ISettings) {
             this.settings = settings;
             this.notifications = {};
-
-            this.registerListeners();
         }
 
         public createDesktopAlert<T extends Entities.FacebookEntity>(title: string, entity: T): void {
@@ -132,12 +151,7 @@
             }
         }
 
-        public updateUnreadCounter(value: number): void {
-            if (chrome && chrome.browserAction)
-                chrome.browserAction.setBadgeText({ text: value > 0 ? value.toString() : "" });
-        }
-
-        private registerListeners(): void {
+        public registerGlobalListeners(): void {
             if (chrome && chrome.browserAction) {
                 chrome.browserAction.onClicked.addListener(() => {
                     this.createOrUpdateTab(`${this.settings.baseUrl}/`);
@@ -176,6 +190,25 @@
             }
         }
 
+        public registerPublicApi(backendService: Api.IBackendService) {
+            if (chrome && chrome.runtime) {
+                chrome.runtime.onMessage.addListener((message: Entities.Request, sender, sendResponse: (response: Entities.Response) => void) => {
+                    switch (message.action) {
+                        case "fetchAll":
+                            backendService.fetchAll(sendResponse);
+                            return true;
+                        default:
+                            return false;
+                    }
+                });
+            }
+        }
+
+        public updateUnreadCounter(value: number): void {
+            if (chrome && chrome.browserAction)
+                chrome.browserAction.setBadgeText({ text: value > 0 ? value.toString() : "" });
+        }
+
         private createOrUpdateTab(url: string): void {
             if (chrome && chrome.tabs) {
                 chrome.tabs.query({ url: url }, (tabs) => {
@@ -200,16 +233,16 @@
             this.localResources = {};
         }
 
-        public getStatusAsync(): Promise<Entities.Status> {
-            return new Promise<Entities.Status>((resolve, reject) => {
+        public getInfoAsync(): Promise<Entities.FacebookInfo> {
+            return new Promise<Entities.FacebookInfo>((resolve, reject) => {
                 $.ajax({
                     url: this.settings.baseUrl,
                     method: "GET",
                     accepts: "*/*"
                 }).done((result: string) => {
-                    resolve(this.parseStatus(result.replace(/<img\b[^>]*>/ig, "")));
-                }).fail((jqXhr: JQueryXHR) => {
-                    reject(new Error(jqXhr.state()));
+                    resolve(this.parseInfo(result.replace(/<img\b[^>]*>/ig, "")));
+                }).fail(() => {
+                    reject(new Error(Entities.ResponseType[Entities.ResponseType.ConnectionRejected]));
                 });
             });
         }
@@ -227,9 +260,9 @@
                     if (payload)
                         resolve(this.parseNotifications(payload));
                     else
-                        reject(new Error("illegal_token"));
-                }).fail((jqXhr: JQueryXHR) => {
-                    reject(new Error(jqXhr.state()));
+                        reject(new Error(Entities.ResponseType[Entities.ResponseType.IllegalToken]));
+                }).fail(() => {
+                    reject(new Error(Entities.ResponseType[Entities.ResponseType.ConnectionRejected]));
                 });
             });
         }
@@ -247,9 +280,9 @@
                     if (payload)
                         resolve(this.parseMessages(payload, profileUrl));
                     else
-                        reject(new Error("illegal_token"));
-                }).fail((jqXhr: JQueryXHR) => {
-                    reject(new Error(jqXhr.state()));
+                        reject(new Error(Entities.ResponseType[Entities.ResponseType.IllegalToken]));
+                }).fail(() => {
+                    reject(new Error(Entities.ResponseType[Entities.ResponseType.ConnectionRejected]));
                 });
             });
         }
@@ -273,17 +306,17 @@
             });
         }
 
-        private parseStatus(result: any): Entities.Status {
+        private parseInfo(result: any): Entities.FacebookInfo {
             const token: string = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
             const profileUrl: string = ($(result).find("a[title='Profile']")[0] as HTMLLinkElement).href;
 
-            return new Entities.Status(token, profileUrl);
+            return new Entities.FacebookInfo(token, profileUrl);
         }
 
         private parseNotifications(json: any): Entities.Notification[] {
             return (json.nodes as Array<any>).map(notification => {
                 const authors: Entities.Author[] = (notification.actors as Array<any>).map(author => new Entities.Author(author.name, author.profile_picture.uri));
-                const type: Entities.Type = this.parseNotificationType(notification.notif_type);
+                const type: Entities.NotificationType = this.parseNotificationType(notification.notif_type);
                 const state: Entities.State = this.parseNotificationState(notification.seen_state);
                 const timestamp: string = this.formTimestampText(notification.timestamp.text, json.servertime - notification.timestamp.time);
                 const attachment: string = (notification.attachments.length > 0 && notification.attachments[0].media) ?
@@ -314,39 +347,39 @@
             });
         }
 
-        private parseNotificationType(type: string): Entities.Type {
+        private parseNotificationType(type: string): Entities.NotificationType {
             // TODO sanitize
             switch (type) {
                 case "group_activity":
-                    return Entities.Type.GroupActivity;
+                    return Entities.NotificationType.GroupActivity;
                 case "birthday_reminder":
-                    return Entities.Type.BirthdayReminder;
+                    return Entities.NotificationType.BirthdayReminder;
                 case "fbpage_fan_invite":
-                    return Entities.Type.PageFanInvite;
+                    return Entities.NotificationType.PageFanInvite;
                 case "admin_plan_mall_activity":
-                    return Entities.Type.AdminPlanMallActivity;
+                    return Entities.NotificationType.AdminPlanMallActivity;
                 case "event_comment_mention":
-                    return Entities.Type.EventCommentMention;
+                    return Entities.NotificationType.EventCommentMention;
                 case "feed_comment":
-                    return Entities.Type.FeedComment;
+                    return Entities.NotificationType.FeedComment;
                 case "like":
-                    return Entities.Type.Like;
+                    return Entities.NotificationType.Like;
                 case "like_tagged":
-                    return Entities.Type.LikeTagged;
+                    return Entities.NotificationType.LikeTagged;
                 case "login_alerts_new_device":
-                    return Entities.Type.LoginAlert;
+                    return Entities.NotificationType.LoginAlert;
                 case "mentions_comment":
-                    return Entities.Type.MentionsComment;
+                    return Entities.NotificationType.MentionsComment;
                 case "photo_tag":
-                    return Entities.Type.PhotoTag;
+                    return Entities.NotificationType.PhotoTag;
                 case "plan_user_invited":
-                    return Entities.Type.PlanUserInvited;
+                    return Entities.NotificationType.PlanUserInvited;
                 case "poke":
-                    return Entities.Type.Poke;
+                    return Entities.NotificationType.Poke;
                 case "tagged_with_story":
-                    return Entities.Type.TaggedWithStory;
+                    return Entities.NotificationType.TaggedWithStory;
                 case "wall":
-                    return Entities.Type.Wall;
+                    return Entities.NotificationType.Wall;
                 default:
                     return null;
             }
@@ -392,6 +425,9 @@
         var loader: Api.ILoader = new Loader(settings);
         var chrome: ChromeService = new ChromeService(settings);
         var worker: BackgroundWorker = new BackgroundWorker(settings, loader, chrome);
+
+        chrome.registerGlobalListeners();
+        chrome.registerPublicApi(worker);
         worker.start();
     };
 }

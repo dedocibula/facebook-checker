@@ -1,9 +1,39 @@
 ﻿namespace Facebook.Entities {
-    export class Status {
+    export class Request {
+        public action: string;
+        public parameters: any[];
+
+        constructor(action: string, parameters?: any[]) {
+            this.action = action;
+            this.parameters = parameters;
+        }
+    }
+
+    export class Response {
+        public type: ResponseType;
+        public newNotifications: number;
+        public newMessages: number;
+        public notifications: Notification[];
+        public messages: Message[];
+
+        constructor(type: ResponseType, newNotifications?: number, newMessages?: number, notifications?: Notification[], messages?: Message[]) {
+            this.type = type;
+            this.newNotifications = newNotifications;
+            this.newMessages = newMessages;
+            this.notifications = notifications;
+            this.messages = messages;
+        }
+    }
+
+    export enum ResponseType {
+        Ok,
+        ConnectionRejected,
+        IllegalToken
+    }
+
+    export class FacebookInfo {
         public token: string;
         public profileUrl: string;
-        public notificationCount: number;
-        public messageCount: number;
 
         constructor(token: string, profileUrl: string) {
             this.token = token;
@@ -17,7 +47,7 @@
         Read
     }
 
-    export const enum Type {
+    export const enum NotificationType {
         GroupActivity,
         BirthdayReminder,
         FeedComment,
@@ -68,11 +98,11 @@
     }
 
     export class Notification extends FacebookEntity {
-        public type: Type;
+        public type: NotificationType;
         public icon: string;
         public attachment: string;
 
-        constructor(id: string, text: string, authors: Author[], picture: string, type: Type, state: State, timestamp: string, url: string, icon: string, attachment?: string) {
+        constructor(id: string, text: string, authors: Author[], picture: string, type: NotificationType, state: State, timestamp: string, url: string, icon: string, attachment?: string) {
             super(id, text, authors, picture, state, timestamp, url);
             this.type = type;
             this.icon = icon;
