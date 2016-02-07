@@ -35,24 +35,15 @@
             if (this.timer)
                 return;
             this.timer = this.executeRepeatedly(() => {
-                this.lazyStatus.then(status => {
+                this.getLazyStatus().then(status => {
                     Promise.all<Entities.FacebookEntity[]>([
                         this.loader.getMessagesAsync(status.token, status.profileUrl),
                         this.loader.getNotificationsAsync(status.token)
                     ]).then(entities => {
-                        let allCounts: number = 0;
+                        status.messageCount = this.processNewEntities(entities[0]);
+                        status.notificationCount = this.processNewEntities(entities[1]);
 
-                        for (let entity of entities.reduce((previous, next) => previous.concat(next))) {
-                            if (entity.state === Entities.State.Unseen ||
-                                entity.state === Entities.State.Unread) {
-                                allCounts++;
-                                this.notifyOnce(entity instanceof Entities.Message ? entity.header : "New Notification", entity);
-                            } else {
-                                delete this.unread[entity.id];
-                            }
-                        }
-
-                        this.chrome.updateUnreadCounter(allCounts);
+                        this.chrome.updateUnreadCounter(status.messageCount + status.notificationCount);
                     }, (error: any) => {
                         this.status = null;
                         console.error(error.stack);
@@ -73,16 +64,32 @@
             return setInterval(action, interval);
         }
 
-        private get lazyStatus(): Promise<Entities.Status> {
+        private getLazyStatus(): Promise<Entities.Status> {
             return this.status ? Promise.resolve(this.status) : this.loader.getStatusAsync().then(status => this.status = status);
         }
 
-        private notifyOnce<T extends Entities.FacebookEntity>(title: string, entity: T): void {
+        private processNewEntities(entities: Entities.FacebookEntity[]): number {
+            let newEntities: number = 0;
+
+            for (let entity of entities) {
+                if (entity.state === Entities.State.Unseen ||
+                    entity.state === Entities.State.Unread) {
+                    newEntities++;
+                    this.notifyOnce(entity);
+                } else {
+                    delete this.unread[entity.id];
+                }
+            }
+
+            return newEntities;
+        }
+
+        private notifyOnce(entity: Entities.FacebookEntity): void {
             if (entity.text === this.unread[entity.id])
                 return;
             this.loader.getExternalResourceAsync(entity.picture).then(localUrl => {
                 entity.picture = localUrl;
-                this.chrome.createDesktopAlert(title, entity);
+                this.chrome.createDesktopAlert(entity instanceof Entities.Message ? entity.header : "New Notification", entity);
             });
             this.playSound();
             this.unread[entity.id] = entity.text;

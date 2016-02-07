@@ -2,6 +2,8 @@
     export class Status {
         public token: string;
         public profileUrl: string;
+        public notificationCount: number;
+        public messageCount: number;
 
         constructor(token: string, profileUrl: string) {
             this.token = token;
