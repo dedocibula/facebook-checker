@@ -46,6 +46,7 @@
     <Content Include="Content\bootstrap-theme.css.map" />
     <Content Include="manifest.json" />
     <None Include="Scripts\jquery-2.2.0.intellisense.js" />
+    <Content Include="popup.html" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Scripts\jquery-2.2.0.js" />
@@ -65,6 +66,7 @@
     <TypeScriptCompile Include="background.ts" />
     <TypeScriptCompile Include="entities.ts" />
     <TypeScriptCompile Include="interfaces.ts" />
+    <TypeScriptCompile Include="popup.ts" />
     <TypeScriptCompile Include="Scripts\typings\chrome\chrome-app.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\chrome\chrome-cast.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\chrome\chrome.d.ts" />

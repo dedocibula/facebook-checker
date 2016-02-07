@@ -422,9 +422,9 @@
             notificationIcon: "Images/icon48.png"
         };
 
-        var loader: Api.ILoader = new Loader(settings);
-        var chrome: ChromeService = new ChromeService(settings);
-        var worker: BackgroundWorker = new BackgroundWorker(settings, loader, chrome);
+        const loader: Api.ILoader = new Loader(settings);
+        const chrome: ChromeService = new ChromeService(settings);
+        const worker: BackgroundWorker = new BackgroundWorker(settings, loader, chrome);
 
         chrome.registerGlobalListeners();
         chrome.registerPublicApi(worker);
