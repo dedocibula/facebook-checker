@@ -350,3 +350,7 @@ small.text-muted {
     background-color: #2A4888;
     color: #fff;
 }
+
+.new-list-item {
+    background-color: #ebeef4;
+}
