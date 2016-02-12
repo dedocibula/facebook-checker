@@ -5,7 +5,8 @@
     "description": "Keep up with your friends, even when you're not on Facebook.",
     "browser_action": {
         "default_icon": "images/icon19.png",
-        "default_title": "Facebook Extension"
+        "default_title": "Facebook Extension",
+        "default_popup": "popup.html"
     },
     "background": {
         "scripts": [ "Scripts/jquery-2.2.0.min.js", "entities.js", "background.js" ]

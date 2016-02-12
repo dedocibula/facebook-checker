@@ -75,6 +75,17 @@ hr {
     margin-top: 32px;
 }
 
+.navbar-collapse.collapse {
+    display: block !important;
+    height: auto !important;
+    padding-bottom: 0;
+    overflow: visible !important;
+    width: auto;
+    border-top: 0;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
 .navbar-blue {
     border-width: 0;
     background-color: #3B5999;
@@ -176,9 +187,22 @@ h1, h2, h3 {
     margin-bottom: 0;
 }
 
+.navbar-nav {
+    margin: 0;
+}
+
 .navbar-brand {
     padding: 4px;
     height: initial;
+}
+
+.navbar-right {
+    float: right !important;
+    margin-right: -15px;
+}
+
+.navbar-header, .navbar-nav > li {
+    float: left;
 }
 
 .navbar-nav > li > a {
@@ -252,10 +276,10 @@ h1, h2, h3 {
         color: #3B5999;
     }
 
-    .modal-footer a:hover, .modal-footer a:active {
-        color: #2A4888;
-        text-decoration: underline;
-    }
+        .modal-footer a:hover, .modal-footer a:active {
+            color: #2A4888;
+            text-decoration: underline;
+        }
 
 .modal-body {
     padding: 0;
@@ -274,55 +298,6 @@ h1, h2, h3 {
 
 small.text-muted {
     font-family: courier,courier-new,monospace;
-}
-
-/* adjust the contents on smaller devices */
-@media (max-width: 768px) {
-
-    .column .padding {
-        padding: 7px;
-    }
-
-    .full {
-        padding-top: 20px;
-    }
-
-    .navbar-blue {
-        background-color: #3B5999;
-        top: 0;
-        width: 100%;
-        position: relative;
-    }
-}
-
-
-/*
-        * off canvas sidebar
-        * --------------------------------------------------
-        */
-@media screen and (max-width: 768px) {
-    .row-offcanvas {
-        position: relative;
-        -webkit-transition: all 0.25s ease-out;
-        -moz-transition: all 0.25s ease-out;
-        transition: all 0.25s ease-out;
-    }
-
-    .row-offcanvas-left.active {
-        left: 33%;
-    }
-
-        .row-offcanvas-left.active .sidebar-offcanvas {
-            left: -33%;
-            position: absolute;
-            top: 0;
-            width: 33%;
-            margin-left: 5px;
-        }
-
-    #sidebar, #sidebar a, #sidebar-footer a {
-        padding-left: 3px;
-    }
 }
 
 .list-group {
