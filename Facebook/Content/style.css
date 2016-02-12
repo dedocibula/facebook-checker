@@ -205,9 +205,9 @@ h1, h2, h3 {
     float: left;
 }
 
-.navbar-nav > li > a {
-    padding: 6px 8px;
-}
+    .navbar-nav > li > a {
+        padding: 6px 8px;
+    }
 
 .btn-primary, .label-primary, .list-group-item.active, .list-group-item.active:hover, .list-group-item.active:focus {
     background-color: #3B5999;

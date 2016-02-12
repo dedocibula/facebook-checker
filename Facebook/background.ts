@@ -152,12 +152,6 @@
         }
 
         public registerGlobalListeners(): void {
-            if (chrome && chrome.browserAction) {
-                chrome.browserAction.onClicked.addListener(() => {
-                    this.createOrUpdateTab(`${this.settings.baseUrl}/`);
-                });
-            }
-
             if (chrome && chrome.notifications) {
                 chrome.notifications.onClicked.addListener((id) => {
                     this.createOrUpdateTab(this.notifications[id]);
