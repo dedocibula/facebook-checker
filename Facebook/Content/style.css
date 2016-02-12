@@ -329,12 +329,22 @@ small.text-muted {
     margin-bottom: 0;
 }
 
-.primary-text {
+.primary-text, .conversation-name, .conversation-text {
     margin-bottom: 2px;
 }
 
-.secondary-text {
+.secondary-text, .conversation-text, .conversation-timestamp {
     color: #999;
+}
+
+.conversation-text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.conversation-timestamp {
+    font-size: 9px;
 }
 
 .emphasize {
