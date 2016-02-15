@@ -1,6 +1,12 @@
 ﻿namespace Facebook.Frontend {
     class Controller {
-        
+        private renderer: Renderer;
+        private backendService: Api.IBackendService;
+
+        constructor(renderer: Renderer, backendService: Api.IBackendService) {
+            this.renderer = renderer;
+            this.backendService = backendService;
+        }
     }
 
     class Renderer {
@@ -8,8 +14,12 @@
     }
 
     class BackendProxy implements Api.IBackendService {
-        fetchAll(onReady?: (response: Entities.Response) => void): void {
+        public fetchAll(onReady?: (response: Entities.Response) => void): void {
             this.internalRequest("fetchAll", null, onReady);
+        }
+
+        public openLink(url: string): void {
+            this.internalRequest("openLink", [url]);
         }
 
         private internalRequest(action: string, parameters?: any[], onReady?: (response: Entities.Response) => void): void {
@@ -22,5 +32,8 @@
         }
     }
 
-    const backendService: Api.IBackendService = new BackendProxy();
+    window.onload = () => {
+        const backendService: Api.IBackendService = new BackendProxy();
+        const renderer: Renderer = new Renderer();
+    };
 }

@@ -49,6 +49,11 @@
             this.start(typeof onReady === "function" ? onReady : null);
         }
 
+        public openLink(url: string): void {
+            if (typeof url === "string")
+                this.chrome.createOrUpdateTab(url);
+        }
+
         public stop(): void {
             if (!this.timer)
                 return;
@@ -187,13 +192,12 @@
         public registerPublicApi(backendService: Api.IBackendService) {
             if (chrome && chrome.runtime) {
                 chrome.runtime.onMessage.addListener((message: Entities.Request, sender, sendResponse: (response: Entities.Response) => void) => {
-                    switch (message.action) {
-                        case "fetchAll":
-                            backendService.fetchAll(sendResponse);
-                            return true;
-                        default:
-                            return false;
-                    }
+                    if (typeof backendService[message.action] !== "function")
+                        return false;
+                    const parameters = $.extend([], message.parameters);
+                    parameters.push(sendResponse);
+                    backendService[message.action].apply(backendService, parameters);
+                    return true;
                 });
             }
         }
@@ -203,7 +207,7 @@
                 chrome.browserAction.setBadgeText({ text: value > 0 ? value.toString() : "" });
         }
 
-        private createOrUpdateTab(url: string): void {
+        public createOrUpdateTab(url: string): void {
             if (chrome && chrome.tabs) {
                 chrome.tabs.query({ url: url }, (tabs) => {
                     if (tabs.length > 0)

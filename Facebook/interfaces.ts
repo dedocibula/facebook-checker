@@ -11,5 +11,7 @@
 
     export interface IBackendService {
         fetchAll(onReady?: (response: Entities.Response) => void): void;
+
+        openLink(url: string): void;
     }
 }
