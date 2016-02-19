@@ -94,5 +94,5 @@ web.Debug.config
 web.Release.config
 *.js
 *.js.map
-!Scripts/*.js
-!Scripts/*.map
+!Facebook/Scripts/*.js
+!Facebook/Scripts/*.map
