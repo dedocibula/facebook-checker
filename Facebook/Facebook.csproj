@@ -63,6 +63,9 @@
     <Content Include="Scripts\handlebars.runtime.min.js" />
     <Content Include="Scripts\jquery-2.2.0.js" />
     <Content Include="Scripts\jquery-2.2.0.min.js" />
+    <None Include="Templates\notifications.handlebars" />
+    <None Include="Templates\messages.handlebars" />
+    <Content Include="Scripts\templates.js" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>

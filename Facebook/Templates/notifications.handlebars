@@ -1,0 +1,24 @@
+﻿{{#each this}}
+<a id="{{id}}" href="{{url}}" class="openable list-group-item {{checkNew state}}">
+    <div class="row">
+        <div class="col-xs-2">
+            <img src="{{picture}}" alt="{{getName authors}}" />
+        </div>
+        <div class="col-xs-10">
+            <div class="primary-text">
+                {{text}}
+            </div>
+            <div class="secondary-text">
+                <img class="icon" src="{{icon}}" alt="" />
+                <span>{{timestamp}}</span>
+            </div>
+        </div>
+    </div>
+</a>
+{{else}}
+<div class="row list-group-item">
+    <div class="col-xs-12">
+        <span class="center-block">No notifications found</span>
+    </div>
+</div>
+{{/each}}

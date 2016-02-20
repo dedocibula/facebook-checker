@@ -294,6 +294,7 @@ h1, h2, h3 {
 .center-block {
     padding-top: 10px;
     padding-bottom: 10px;
+    text-align: center;
 }
 
 small.text-muted {
