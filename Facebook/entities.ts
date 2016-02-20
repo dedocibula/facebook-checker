@@ -28,6 +28,7 @@
     export enum ResponseType {
         Ok,
         ConnectionRejected,
+        Unauthorized,
         IllegalToken
     }
 

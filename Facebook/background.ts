@@ -76,12 +76,12 @@
                             (entities[0] as Entities.Notification[]), (entities[1] as Entities.Message[])));
                     }, (error: any) => {
                         this.info = null;
-                        console.error(error.stack);
+                        console.error(`Date: ${new Date()}, ${error.stack}`);
 
                         resolve(new Entities.Response((Entities.ResponseType as any)[error.message]));
                     });
                 }, (error: any) => {
-                    console.error(error.stack);
+                    console.error(`Date: ${new Date()}, ${error.stack}`);
 
                     resolve(new Entities.Response(Entities.ResponseType.ConnectionRejected));
                 });
@@ -238,7 +238,11 @@
                     method: "GET",
                     accepts: "*/*"
                 }).done((result: string) => {
-                    resolve(this.parseInfo(result.replace(/<img\b[^>]*>/ig, "")));
+                    result = result.replace(/<img\b[^>]*>/ig, "");
+                    if ($(result).find("#login_form").length === 0)
+                        resolve(this.parseInfo(result));
+                    else
+                        reject(new Error(Entities.ResponseType[Entities.ResponseType.Unauthorized]));
                 }).fail(() => {
                     reject(new Error(Entities.ResponseType[Entities.ResponseType.ConnectionRejected]));
                 });
@@ -254,11 +258,12 @@
                     dataType: "text",
                     data: { length: this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
-                    const payload = JSON.parse((result).match(/{.*}/)[0]).payload;
-                    if (payload)
-                        resolve(this.parseNotifications(payload));
+                    const response = JSON.parse((result).match(/{.*}/)[0]);
+                    if (!response.error)
+                        resolve(this.parseNotifications(response.payload));
                     else
-                        reject(new Error(Entities.ResponseType[Entities.ResponseType.IllegalToken]));
+                        reject(new Error(Entities.ResponseType[response.error === 1357001 ?
+                            Entities.ResponseType.Unauthorized : Entities.ResponseType.IllegalToken]));
                 }).fail(() => {
                     reject(new Error(Entities.ResponseType[Entities.ResponseType.ConnectionRejected]));
                 });
@@ -274,11 +279,12 @@
                     dataType: "text",
                     data: { "inbox[offset]": 0, "inbox[limit]": this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
-                    const payload = JSON.parse((result).match(/{.*}/)[0]).payload;
-                    if (payload)
-                        resolve(this.parseMessages(payload, profileUrl));
+                    const response = JSON.parse((result).match(/{.*}/)[0]);
+                    if (!response.error)
+                        resolve(this.parseMessages(response.payload, profileUrl));
                     else
-                        reject(new Error(Entities.ResponseType[Entities.ResponseType.IllegalToken]));
+                        reject(new Error(Entities.ResponseType[response.error === 1357001 ?
+                            Entities.ResponseType.Unauthorized : Entities.ResponseType.IllegalToken]));
                 }).fail(() => {
                     reject(new Error(Entities.ResponseType[Entities.ResponseType.ConnectionRejected]));
                 });
@@ -304,7 +310,7 @@
             });
         }
 
-        private parseInfo(result: any): Entities.FacebookInfo {
+        private parseInfo(result: string): Entities.FacebookInfo {
             const token: string = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
             const profileUrl: string = ($(result).find("a[title='Profile']")[0] as HTMLLinkElement).href;
 
