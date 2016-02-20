@@ -104,7 +104,7 @@
         }
 
         public toggleLoading(): void {
-            this.$loaderImage.css("top", (this.$mainContainer.height() / 2 - 20) + "px").toggle();
+            this.$loaderImage.css("top", (this.$mainContainer.height() / 2 - 25) + "px").toggle();
             this.$mainContainer.css("pointer-events", this.$mainContainer.css("pointer-events") === "none" ? "all" : "none").toggleClass("loading");
         }
 

@@ -83,7 +83,7 @@
                 }, (error: any) => {
                     console.error(`Date: ${new Date()}, ${error.stack}`);
 
-                    resolve(new Entities.Response(Entities.ResponseStatus.ConnectionRejected));
+                    resolve(new Entities.Response((Entities.ResponseStatus as any)[error.message]));
                 });
             });
         }
@@ -418,7 +418,7 @@
             uriSuffix: "?__pc=EXP1%3ADEFAULT",
             refreshInterval: 20 * 1000,
             notificationFadeoutDelay: 10 * 1000,
-            fetchLimit: 7,
+            fetchLimit: 5,
             simpleMessagePrefix: "/messages/",
             complexMessagePrefix: "/messages/conversation-",
             sound: "chime.ogg",
