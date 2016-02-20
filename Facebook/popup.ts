@@ -1,10 +1,15 @@
 ﻿namespace Facebook.Frontend {
-    interface IElements {
+    interface ISettings {
+        baseUrl: string;
+        notificationsUri: string;
+        messageBoxUri: string;
+
         openableLinks: string;
         navigationLinks: string;
         mainContainer: string;
         mainSection: string;
         loaderImage: string;
+        footerLink: string;
 
         notificationsTemplate: string;
         messagesTemplate: string;
@@ -20,15 +25,15 @@
         private $body: JQuery;
         private $mainContainer: JQuery;
 
-        constructor(elements: IElements, renderer: Renderer, backendService: Api.IBackendService) {
+        constructor(settings: ISettings, renderer: Renderer, backendService: Api.IBackendService) {
             this.renderer = renderer;
             this.backendService = backendService;
 
-            this.openableLinks = elements.openableLinks;
-            this.navigationLinks = elements.navigationLinks;
+            this.openableLinks = settings.openableLinks;
+            this.navigationLinks = settings.navigationLinks;
 
             this.$body = $("body");
-            this.$mainContainer = $(elements.mainContainer);
+            this.$mainContainer = $(settings.mainContainer);
         }
 
         public registerGlobalListeners(): void {
@@ -45,19 +50,18 @@
                     const $link = $(this);
                     if (!$link.hasClass("selected"))
                         $link.addClass("selected").siblings(self.navigationLinks).removeClass("selected");
+                    self.load(this.id);
                 });
         }
 
-        public invalidateAll(): void {
-            this.$mainContainer.css("pointer-events", "none");
+        public load(entities: string = "notifications"): void {
             this.renderer.toggleLoading();
             this.backendService.fetchAll(response => {
                 if (response.status === Entities.ResponseStatus.Ok) {
-                    if (response.newMessages > 0)
+                    if (entities === "messages" || response.newMessages > 0)
                         this.renderer.renderMessages(response.messages);
                     else
                         this.renderer.renderNotifications(response.notifications);
-                    this.$mainContainer.css("pointer-events", "all");
                     this.renderer.toggleLoading();
                     this.$mainContainer.css("visibility", "visible");
                 }
@@ -66,36 +70,45 @@
     }
 
     class Renderer {
+        private notificationsUrl: string;
+        private messageBoxUrl: string;
+
         private $mainContainer: JQuery;
         private $mainSection: JQuery;
         private $loaderImage: JQuery;
+        private footerLink: HTMLLinkElement;
 
         private notificationsTemplate: HandlebarsTemplateDelegate;
         private messagesTemplate: HandlebarsTemplateDelegate;
 
-        constructor(elements: IElements) {
-            this.$mainContainer = $(elements.mainContainer);
-            this.$mainSection = $(elements.mainSection);
-            this.$loaderImage = $(elements.loaderImage);
+        constructor(settings: ISettings) {
+            this.notificationsUrl = settings.baseUrl + settings.notificationsUri;
+            this.messageBoxUrl = settings.baseUrl + settings.messageBoxUri;
 
-            this.initializeHandlebars(elements);
+            this.$mainContainer = $(settings.mainContainer);
+            this.$mainSection = $(settings.mainSection);
+            this.$loaderImage = $(settings.loaderImage);
+            this.footerLink = $(settings.footerLink)[0] as HTMLLinkElement;
+
+            this.initializeHandlebars(settings);
         }
 
         public renderNotifications(notifications: Entities.Notification[]): void {
             this.$mainSection.html(this.notificationsTemplate(notifications));
+            this.footerLink.href = this.notificationsUrl;
         }
 
         public renderMessages(messages: Entities.Message[]): void {
             this.$mainSection.html(this.messagesTemplate(messages));
+            this.footerLink.href = this.messageBoxUrl;
         }
 
         public toggleLoading(): void {
-            this.$loaderImage.css("top", (this.$mainContainer.height() / 2 - 20) + "px");
-            this.$loaderImage.toggle();
-            this.$mainContainer.toggleClass("loading");
+            this.$loaderImage.css("top", (this.$mainContainer.height() / 2 - 20) + "px").toggle();
+            this.$mainContainer.css("pointer-events", this.$mainContainer.css("pointer-events") === "none" ? "all" : "none").toggleClass("loading");
         }
 
-        private initializeHandlebars(elements: IElements): void {
+        private initializeHandlebars(elements: ISettings): void {
             // templates
             this.notificationsTemplate = Handlebars.templates[elements.notificationsTemplate];
             this.messagesTemplate = Handlebars.templates[elements.messagesTemplate];
@@ -131,22 +144,27 @@
     }
 
     window.onload = () => {
-        const elements: IElements = {
+        const settings: ISettings = {
+            baseUrl: "https://www.facebook.com",
+            notificationsUri: "/notifications",
+            messageBoxUri: "/messages",
+
             openableLinks: "a.openable",
             navigationLinks: "nav li",
             mainContainer: "#main",
             mainSection: "#main-section",
             loaderImage: "#loader",
+            footerLink: "#footer",
 
             notificationsTemplate: "notifications",
             messagesTemplate: "messages"
         };
 
         const backendService: Api.IBackendService = new BackendProxy();
-        const renderer: Renderer = new Renderer(elements);
-        const controller: Controller = new Controller(elements, renderer, backendService);
+        const renderer: Renderer = new Renderer(settings);
+        const controller: Controller = new Controller(settings, renderer, backendService);
 
         controller.registerGlobalListeners();
-        controller.invalidateAll();
+        controller.load();
     };
 }
