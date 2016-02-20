@@ -72,24 +72,24 @@
                         const newNotifications: number = entities[0].filter(entity => entity.state !== Entities.State.Read).length;
                         const newMessages: number = entities[1].filter(entity => entity.state !== Entities.State.Read).length;
 
-                        resolve(new Entities.Response(Entities.ResponseType.Ok, newNotifications, newMessages,
+                        resolve(new Entities.Response(Entities.ResponseStatus.Ok, newNotifications, newMessages,
                             (entities[0] as Entities.Notification[]), (entities[1] as Entities.Message[])));
                     }, (error: any) => {
                         this.info = null;
                         console.error(`Date: ${new Date()}, ${error.stack}`);
 
-                        resolve(new Entities.Response((Entities.ResponseType as any)[error.message]));
+                        resolve(new Entities.Response((Entities.ResponseStatus as any)[error.message]));
                     });
                 }, (error: any) => {
                     console.error(`Date: ${new Date()}, ${error.stack}`);
 
-                    resolve(new Entities.Response(Entities.ResponseType.ConnectionRejected));
+                    resolve(new Entities.Response(Entities.ResponseStatus.ConnectionRejected));
                 });
             });
         }
 
         private processResponse(response: Entities.Response): void {
-            if (response.type !== Entities.ResponseType.Ok)
+            if (response.status !== Entities.ResponseStatus.Ok)
                 return;
 
             for (let entity of response.messages) {
@@ -242,9 +242,9 @@
                     if ($(result).find("#login_form").length === 0)
                         resolve(this.parseInfo(result));
                     else
-                        reject(new Error(Entities.ResponseType[Entities.ResponseType.Unauthorized]));
+                        reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.Unauthorized]));
                 }).fail(() => {
-                    reject(new Error(Entities.ResponseType[Entities.ResponseType.ConnectionRejected]));
+                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
                 });
             });
         }
@@ -262,10 +262,10 @@
                     if (!response.error)
                         resolve(this.parseNotifications(response.payload));
                     else
-                        reject(new Error(Entities.ResponseType[response.error === 1357001 ?
-                            Entities.ResponseType.Unauthorized : Entities.ResponseType.IllegalToken]));
+                        reject(new Error(Entities.ResponseStatus[response.error === 1357001 ?
+                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken]));
                 }).fail(() => {
-                    reject(new Error(Entities.ResponseType[Entities.ResponseType.ConnectionRejected]));
+                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
                 });
             });
         }
@@ -283,10 +283,10 @@
                     if (!response.error)
                         resolve(this.parseMessages(response.payload, profileUrl));
                     else
-                        reject(new Error(Entities.ResponseType[response.error === 1357001 ?
-                            Entities.ResponseType.Unauthorized : Entities.ResponseType.IllegalToken]));
+                        reject(new Error(Entities.ResponseStatus[response.error === 1357001 ?
+                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken]));
                 }).fail(() => {
-                    reject(new Error(Entities.ResponseType[Entities.ResponseType.ConnectionRejected]));
+                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
                 });
             });
         }

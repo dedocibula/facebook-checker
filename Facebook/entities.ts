@@ -10,14 +10,14 @@
     }
 
     export class Response {
-        public type: ResponseType;
+        public status: ResponseStatus;
         public newNotifications: number;
         public newMessages: number;
         public notifications: Notification[];
         public messages: Message[];
 
-        constructor(type: ResponseType, newNotifications?: number, newMessages?: number, notifications?: Notification[], messages?: Message[]) {
-            this.type = type;
+        constructor(type: ResponseStatus, newNotifications?: number, newMessages?: number, notifications?: Notification[], messages?: Message[]) {
+            this.status = type;
             this.newNotifications = newNotifications;
             this.newMessages = newMessages;
             this.notifications = notifications;
@@ -25,7 +25,7 @@
         }
     }
 
-    export enum ResponseType {
+    export enum ResponseStatus {
         Ok,
         ConnectionRejected,
         Unauthorized,

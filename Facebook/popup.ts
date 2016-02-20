@@ -3,6 +3,8 @@
         openableLinks: string;
         navigationLinks: string;
         mainContainer: string;
+        mainSection: string;
+        loaderImage: string;
 
         notificationsTemplate: string;
         messagesTemplate: string;
@@ -16,6 +18,7 @@
         private navigationLinks: string;
 
         private $body: JQuery;
+        private $mainContainer: JQuery;
 
         constructor(elements: IElements, renderer: Renderer, backendService: Api.IBackendService) {
             this.renderer = renderer;
@@ -25,6 +28,7 @@
             this.navigationLinks = elements.navigationLinks;
 
             this.$body = $("body");
+            this.$mainContainer = $(elements.mainContainer);
         }
 
         public registerGlobalListeners(): void {
@@ -43,26 +47,52 @@
                         $link.addClass("selected").siblings(self.navigationLinks).removeClass("selected");
                 });
         }
+
+        public invalidateAll(): void {
+            this.$mainContainer.css("pointer-events", "none");
+            this.renderer.toggleLoading();
+            this.backendService.fetchAll(response => {
+                if (response.status === Entities.ResponseStatus.Ok) {
+                    if (response.newMessages > 0)
+                        this.renderer.renderMessages(response.messages);
+                    else
+                        this.renderer.renderNotifications(response.notifications);
+                    this.$mainContainer.css("pointer-events", "all");
+                    this.renderer.toggleLoading();
+                    this.$mainContainer.css("visibility", "visible");
+                }
+            });
+        }
     }
 
     class Renderer {
         private $mainContainer: JQuery;
+        private $mainSection: JQuery;
+        private $loaderImage: JQuery;
 
         private notificationsTemplate: HandlebarsTemplateDelegate;
         private messagesTemplate: HandlebarsTemplateDelegate;
 
         constructor(elements: IElements) {
             this.$mainContainer = $(elements.mainContainer);
+            this.$mainSection = $(elements.mainSection);
+            this.$loaderImage = $(elements.loaderImage);
 
             this.initializeHandlebars(elements);
         }
 
         public renderNotifications(notifications: Entities.Notification[]): void {
-            this.$mainContainer.html(this.notificationsTemplate(notifications));
+            this.$mainSection.html(this.notificationsTemplate(notifications));
         }
 
         public renderMessages(messages: Entities.Message[]): void {
-            this.$mainContainer.html(this.messagesTemplate(messages));
+            this.$mainSection.html(this.messagesTemplate(messages));
+        }
+
+        public toggleLoading(): void {
+            this.$loaderImage.css("top", (this.$mainContainer.height() / 2 - 20) + "px");
+            this.$loaderImage.toggle();
+            this.$mainContainer.toggleClass("loading");
         }
 
         private initializeHandlebars(elements: IElements): void {
@@ -104,7 +134,9 @@
         const elements: IElements = {
             openableLinks: "a.openable",
             navigationLinks: "nav li",
-            mainContainer: "#main-container",
+            mainContainer: "#main",
+            mainSection: "#main-section",
+            loaderImage: "#loader",
 
             notificationsTemplate: "notifications",
             messagesTemplate: "messages"
@@ -115,8 +147,6 @@
         const controller: Controller = new Controller(elements, renderer, backendService);
 
         controller.registerGlobalListeners();
-        backendService.fetchAll(response => {
-            renderer.renderMessages(response.messages);
-        });
+        controller.invalidateAll();
     };
 }
