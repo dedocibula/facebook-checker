@@ -10,6 +10,8 @@
         sound: string;
         contextMessage: string;
         notificationIcon: string;
+        onlineIcon: string;
+        offlineIcon: string;
     }
 
     class BackgroundWorker implements Api.IBackendService {
@@ -17,6 +19,7 @@
         private loader: Api.ILoader;
         private chrome: ChromeService;
         private timer: number;
+        private isOnline: boolean;
         private sound: HTMLAudioElement;
 
         private info: Entities.FacebookInfo;
@@ -27,6 +30,7 @@
             this.loader = loader;
             this.chrome = chrome;
             this.timer = null;
+            this.isOnline = false;
 
             this.unread = {};
         }
@@ -74,16 +78,19 @@
 
                         resolve(new Entities.Response(Entities.ResponseStatus.Ok, newNotifications, newMessages,
                             (entities[0] as Entities.Notification[]), (entities[1] as Entities.Message[])));
+                        this.online = true;
                     }, (error: any) => {
                         this.info = null;
                         console.error(`Date: ${new Date()}, ${error.stack}`);
 
                         resolve(new Entities.Response((Entities.ResponseStatus as any)[error.message]));
+                        this.online = false;
                     });
                 }, (error: any) => {
                     console.error(`Date: ${new Date()}, ${error.stack}`);
 
                     resolve(new Entities.Response((Entities.ResponseStatus as any)[error.message]));
+                    this.online = false;
                 });
             });
         }
@@ -125,6 +132,12 @@
             if (!this.sound)
                 this.sound = new Audio(this.settings.sound);
             this.sound.play();
+        }
+
+        private set online(value: boolean) {
+            if (this.isOnline !== value)
+                this.chrome.updateExtensionIcon(value);
+            this.isOnline = value;
         }
     }
 
@@ -205,6 +218,11 @@
         public updateUnreadCounter(value: number): void {
             if (chrome && chrome.browserAction)
                 chrome.browserAction.setBadgeText({ text: value > 0 ? value.toString() : "" });
+        }
+
+        public updateExtensionIcon(online: boolean): void {
+            if (chrome && chrome.browserAction)
+                chrome.browserAction.setIcon({ path: (online ? this.settings.onlineIcon : this.settings.offlineIcon) });
         }
 
         public createOrUpdateTab(url: string): void {
@@ -321,7 +339,7 @@
             return (json.nodes as Array<any>).map(notification => {
                 const authors: Entities.Author[] = (notification.actors as Array<any>).map(author => new Entities.Author(author.name, author.profile_picture.uri));
                 const type: Entities.NotificationType = this.parseNotificationType(notification.notif_type);
-                const state: Entities.State = this.parseNotificationState(notification.seen_state);
+                const state: Entities.State = this.parseState(notification.seen_state as string);
                 const timestamp: string = this.formTimestampText(notification.timestamp.text, json.servertime - notification.timestamp.time);
                 const attachment: string = (notification.attachments.length > 0 && notification.attachments[0].media) ?
                     notification.attachments[0].media.image.uri : null;
@@ -343,7 +361,7 @@
                 const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
                 const text: string = authors.length === 1 ? message.snippet : `${participants[message.snippet_sender].shortName}: ${message.snippet}`;
                 const picture: string = message.name.length === 0 ? authors[0].profilePicture : participants[message.snippet_sender].profilePicture;
-                const state: Entities.State = message.unread_count === 0 ? Entities.State.Read : Entities.State.Unread;
+                const state: Entities.State = this.parseState(message.unread_count as number);
                 const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
                 const url: string = this.settings.baseUrl + prefix + message.thread_fbid;
 
@@ -389,16 +407,20 @@
             }
         }
 
-        private parseNotificationState(text: string): Entities.State {
-            switch (text) {
-                case "UNSEEN_AND_UNREAD":
-                    return Entities.State.Unseen;
-                case "SEEN_BUT_UNREAD":
-                    return Entities.State.Unread;
-                case "SEEN_AND_READ":
-                    return Entities.State.Read;
-                default:
-                    return null;
+        private parseState(state: number | string): Entities.State {
+            if (typeof state === "number") {
+                return state === 0 ? Entities.State.Read : Entities.State.Unread;
+            } else {
+                switch (state) {
+                    case "UNSEEN_AND_UNREAD":
+                        return Entities.State.Unseen;
+                    case "SEEN_BUT_UNREAD":
+                        return Entities.State.Unread;
+                    case "SEEN_AND_READ":
+                        return Entities.State.Read;
+                    default:
+                        return null;
+                }
             }
         }
 
@@ -423,7 +445,9 @@
             complexMessagePrefix: "/messages/conversation-",
             sound: "chime.ogg",
             contextMessage: "www.facebook.com",
-            notificationIcon: "Images/icon48.png"
+            notificationIcon: "Images/icon48.png",
+            onlineIcon: "Images/icon19.png",
+            offlineIcon: "Images/icon-loggedout.png"
         };
 
         const loader: Api.ILoader = new Loader(settings);

@@ -42,15 +42,14 @@
                 .off("click")
                 .on("click", self.openableLinks, function (event) {
                     event.preventDefault();
-                    const link = (this as HTMLLinkElement);
+                    const link: HTMLLinkElement = this as HTMLLinkElement;
                     self.backendService.openLink(link.href);
                 })
                 .on("click", self.navigationLinks, function (event) {
                     event.preventDefault();
-                    const $link = $(this);
-                    if (!$link.hasClass("selected"))
-                        $link.addClass("selected").siblings(self.navigationLinks).removeClass("selected");
-                    self.load(this.id);
+                    const link: HTMLElement = this as HTMLElement;
+                    self.renderer.makeSelected(link);
+                    self.load(link.id);
                 });
         }
 
@@ -106,6 +105,12 @@
         public toggleLoading(): void {
             this.$loaderImage.css("top", (this.$mainContainer.height() / 2 - 25) + "px").toggle();
             this.$mainContainer.css("pointer-events", this.$mainContainer.css("pointer-events") === "none" ? "all" : "none").toggleClass("loading");
+        }
+
+        public makeSelected(element: HTMLElement): void {
+            const $element: JQuery = $(element);
+            if (!$element.hasClass("selected"))
+                $element.addClass("selected").siblings().removeClass("selected");
         }
 
         private initializeHandlebars(elements: ISettings): void {

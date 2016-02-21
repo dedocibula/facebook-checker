@@ -4,7 +4,7 @@
     "manifest_version": 2,
     "description": "Keep up with your friends, even when you're not on Facebook.",
     "browser_action": {
-        "default_icon": "images/icon19.png",
+        "default_icon": "images/icon-loggedout.png",
         "default_title": "Facebook Extension",
         "default_popup": "popup.html"
     },
