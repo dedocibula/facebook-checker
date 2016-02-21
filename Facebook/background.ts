@@ -83,13 +83,13 @@
                         this.info = null;
                         console.error(`Date: ${new Date()}, ${error.stack}`);
 
-                        resolve(new Entities.Response((Entities.ResponseStatus as any)[error.message]));
+                        resolve(new Entities.Response(Entities.ResponseStatus[error.message as string]));
                         this.online = false;
                     });
                 }, (error: any) => {
                     console.error(`Date: ${new Date()}, ${error.stack}`);
 
-                    resolve(new Entities.Response((Entities.ResponseStatus as any)[error.message]));
+                    resolve(new Entities.Response(Entities.ResponseStatus[error.message as string]));
                     this.online = false;
                 });
             });

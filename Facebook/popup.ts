@@ -3,6 +3,8 @@
         baseUrl: string;
         notificationsUri: string;
         messageBoxUri: string;
+        preferences: Entities.EntityType[];
+        defaultType: Entities.EntityType;
 
         openableLinks: string;
         navigationLinks: string;
@@ -23,6 +25,9 @@
         private renderer: Renderer;
         private backendService: Api.IBackendService;
 
+        private preferences: Entities.EntityType[];
+        private defaultType: Entities.EntityType;
+
         private openableLinks: string;
         private navigationLinks: string;
 
@@ -31,6 +36,9 @@
         constructor(settings: ISettings, renderer: Renderer, backendService: Api.IBackendService) {
             this.renderer = renderer;
             this.backendService = backendService;
+
+            this.preferences = settings.preferences;
+            this.defaultType = settings.defaultType;
 
             this.openableLinks = settings.openableLinks;
             this.navigationLinks = settings.navigationLinks;
@@ -50,19 +58,18 @@
                 .on("click", self.navigationLinks, function (event) {
                     event.preventDefault();
                     const link: HTMLElement = this as HTMLElement;
-                    self.renderer.makeSelected(link);
-                    self.load(link.id);
+                    self.load(Entities.EntityType[(link.id.charAt(0).toUpperCase() + link.id.slice(1))]);
                 });
         }
 
-        public load(entities: string = "notifications"): void {
+        public load(entityType?: Entities.EntityType): void {
             this.renderer.toggleLoading();
             this.backendService.fetchAll(response => {
                 if (response.status === Entities.ResponseStatus.Ok) {
-                    if (entities === "messages" || response.newMessages > 0)
-                        this.renderer.renderMessages(response.messages);
+                    if (typeof entityType === "number")
+                        this.renderByType(entityType, response);
                     else
-                        this.renderer.renderNotifications(response.notifications);
+                        this.renderByPreferences(response);
                     this.renderer.displayMain();
                 } else if (response.status === Entities.ResponseStatus.Unauthorized) {
                     this.renderer.displayUnauthorized();
@@ -73,6 +80,29 @@
                 }
                 this.renderer.toggleLoading(true);
             });
+        }
+
+        private renderByType(entityType: Entities.EntityType, response: Entities.Response): void {
+            if (entityType === Entities.EntityType.Notifications)
+                this.renderer.renderNotifications(response.notifications);
+            else if (entityType === Entities.EntityType.Messages)
+                this.renderer.renderMessages(response.messages);
+            else
+                throw new Error("Unrecognized type");
+        }
+
+        private renderByPreferences(response: Entities.Response): void {
+            for (let i = 0; i < this.preferences.length; i++) {
+                const entityType = this.preferences[i];
+                if (entityType === Entities.EntityType.Notifications && response.newNotifications > 0) {
+                    this.renderer.renderNotifications(response.notifications);
+                    return;
+                } else if (entityType === Entities.EntityType.Messages && response.newMessages > 0) {
+                    this.renderer.renderMessages(response.messages);
+                    return;
+                }
+            }
+            this.renderByType(this.defaultType, response);
         }
     }
 
@@ -87,6 +117,7 @@
         private $errorMessage: JQuery;
         private $authorizedSections: JQuery;
         private $loaderImage: JQuery;
+        private $navigationLinks: JQuery;
         private footerLink: HTMLLinkElement;
 
         private notificationsTemplate: HandlebarsTemplateDelegate;
@@ -103,6 +134,7 @@
             this.$errorMessage = $(settings.errorMessage);
             this.$authorizedSections = $(settings.authorizedSections);
             this.$loaderImage = $(settings.loaderImage);
+            this.$navigationLinks = $(settings.navigationLinks);
             this.footerLink = $(settings.footerLink)[0] as HTMLLinkElement;
 
             this.initializeHandlebars(settings);
@@ -111,11 +143,13 @@
         public renderNotifications(notifications: Entities.Notification[]): void {
             this.$mainSection.html(this.notificationsTemplate(notifications));
             this.footerLink.href = this.notificationsUrl;
+            this.makeSelected(Entities.EntityType.Notifications);
         }
 
         public renderMessages(messages: Entities.Message[]): void {
             this.$mainSection.html(this.messagesTemplate(messages));
             this.footerLink.href = this.messageBoxUrl;
+            this.makeSelected(Entities.EntityType.Messages);
         }
 
         public toggleLoading(showContainer: boolean = false): void {
@@ -147,8 +181,8 @@
             this.$errorSection.show();
         }
 
-        public makeSelected(element: HTMLElement): void {
-            const $element: JQuery = $(element);
+        public makeSelected(type: Entities.EntityType): void {
+            const $element: JQuery = this.$navigationLinks.filter(`#${Entities.EntityType[type].toLowerCase()}`);
             if (!$element.hasClass("selected"))
                 $element.addClass("selected").siblings().removeClass("selected");
         }
@@ -210,6 +244,8 @@
             baseUrl: "https://www.facebook.com",
             notificationsUri: "/notifications",
             messageBoxUri: "/messages",
+            preferences: [Entities.EntityType.Messages, Entities.EntityType.Notifications],
+            defaultType: Entities.EntityType.Notifications,
 
             openableLinks: "a.openable",
             navigationLinks: "nav li",
