@@ -70,6 +70,7 @@
                         this.renderByType(entityType, response);
                     else
                         this.renderByPreferences(response);
+                    this.updateHeaders(response);
                     this.renderer.displayMain();
                 } else if (response.status === Entities.ResponseStatus.Unauthorized) {
                     this.renderer.displayUnauthorized();
@@ -92,8 +93,7 @@
         }
 
         private renderByPreferences(response: Entities.Response): void {
-            for (let i = 0; i < this.preferences.length; i++) {
-                const entityType = this.preferences[i];
+            for (let entityType of this.preferences) {
                 if (entityType === Entities.EntityType.Notifications && response.newNotifications > 0) {
                     this.renderer.renderNotifications(response.notifications);
                     return;
@@ -103,6 +103,13 @@
                 }
             }
             this.renderByType(this.defaultType, response);
+        }
+
+        private updateHeaders(response: Entities.Response): void {
+            const counts: { [type: string]: number } = {};
+            counts[Entities.EntityType[Entities.EntityType.Notifications]] = response.newNotifications;
+            counts[Entities.EntityType[Entities.EntityType.Messages]] = response.newMessages;
+            this.renderer.updateUnreadCounts(counts);
         }
     }
 
@@ -152,6 +159,14 @@
             this.makeSelected(Entities.EntityType.Messages);
         }
 
+        public updateUnreadCounts(counts: { [type: string]: number }): void {
+            for (let type in counts) {
+                const $link: JQuery = this.$navigationLinks.filter(`#${type.toLowerCase()}`).find("a");
+                const original = $link.text().split(" (")[0];
+                $link.text(original + (counts[type] === 0 ? "" : ` (${counts[type]})`));
+            }
+        }
+
         public toggleLoading(showContainer: boolean = false): void {
             this.$loaderImage.css("top", (this.$mainContainer.height() / 2 - 25) + "px").toggle();
             this.$mainContainer.css("pointer-events", this.$mainContainer.css("pointer-events") === "none" ? "all" : "none").toggleClass("loading");
@@ -179,12 +194,6 @@
             this.$mainSection.hide();
             this.$errorMessage.text(error);
             this.$errorSection.show();
-        }
-
-        public makeSelected(type: Entities.EntityType): void {
-            const $element: JQuery = this.$navigationLinks.filter(`#${Entities.EntityType[type].toLowerCase()}`);
-            if (!$element.hasClass("selected"))
-                $element.addClass("selected").siblings().removeClass("selected");
         }
 
         private initializeHandlebars(elements: ISettings): void {
@@ -217,6 +226,12 @@
                 }
                 return text;
             });
+        }
+
+        private makeSelected(type: Entities.EntityType): void {
+            const $element: JQuery = this.$navigationLinks.filter(`#${Entities.EntityType[type].toLowerCase()}`);
+            if (!$element.hasClass("selected"))
+                $element.addClass("selected").siblings().removeClass("selected");
         }
     }
 
