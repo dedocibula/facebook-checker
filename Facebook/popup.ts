@@ -8,6 +8,7 @@
 
         openableLinks: string;
         navigationLinks: string;
+        navigationMappings: { [type: string]: string };
         mainContainer: string;
         mainSection: string;
         loginSection: string;
@@ -124,7 +125,7 @@
         private $errorMessage: JQuery;
         private $authorizedSections: JQuery;
         private $loaderImage: JQuery;
-        private $navigationLinks: JQuery;
+        private $navigationMappings: { [type: string]: JQuery };
         private footerLink: HTMLLinkElement;
 
         private notificationsTemplate: HandlebarsTemplateDelegate;
@@ -141,9 +142,9 @@
             this.$errorMessage = $(settings.errorMessage);
             this.$authorizedSections = $(settings.authorizedSections);
             this.$loaderImage = $(settings.loaderImage);
-            this.$navigationLinks = $(settings.navigationLinks);
             this.footerLink = $(settings.footerLink)[0] as HTMLLinkElement;
 
+            this.navigationMappings = settings.navigationMappings;
             this.initializeHandlebars(settings);
         }
 
@@ -161,7 +162,7 @@
 
         public updateUnreadCounts(counts: { [type: string]: number }): void {
             for (let type in counts) {
-                const $link: JQuery = this.$navigationLinks.filter(`#${type.toLowerCase()}`).find("a");
+                const $link: JQuery = this.$navigationMappings[type].find("a");
                 const original = $link.text().split(" (")[0];
                 $link.text(original + (counts[type] === 0 ? "" : ` (${counts[type]})`));
             }
@@ -229,9 +230,15 @@
         }
 
         private makeSelected(type: Entities.EntityType): void {
-            const $element: JQuery = this.$navigationLinks.filter(`#${Entities.EntityType[type].toLowerCase()}`);
+            const $element: JQuery = this.$navigationMappings[Entities.EntityType[type]];
             if (!$element.hasClass("selected"))
                 $element.addClass("selected").siblings().removeClass("selected");
+        }
+
+        private set navigationMappings(navigationMappings: { [type: string]: string }) {
+            this.$navigationMappings = {};
+            for (let type in navigationMappings)
+                this.$navigationMappings[type] = $(navigationMappings[type]);
         }
     }
 
@@ -264,6 +271,10 @@
 
             openableLinks: "a.openable",
             navigationLinks: "nav li",
+            navigationMappings: {
+                "Notifications": "#notifications",
+                "Messages": "#messages"
+            },
             mainContainer: "#main",
             mainSection: "#main-section",
             loginSection: "#login-section",
