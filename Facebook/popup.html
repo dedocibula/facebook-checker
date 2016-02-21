@@ -23,7 +23,7 @@
                     </a>
                 </div>
                 <nav class="collapse navbar-collapse" role="navigation">
-                    <ul class="nav navbar-nav navbar-right">
+                    <ul class="nav navbar-nav navbar-right authorized" style="display: none;">
                         <li id="notifications" class="selected">
                             <a href="#"><i class="glyphicon glyphicon-globe"></i> Notifications</a>
                         </li>
@@ -41,100 +41,29 @@
         <section class="row">
 
             <!-- content -->
-            <div id="main-section" class="list-group">
-<!--                <div class="row list-group-item">-->
-<!--                    <div class="col-xs-12">-->
-<!--                        <span class="center-block">No messages found</span>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--                <a href="http://bootply.com/tagged/modal" class="list-group-item new-list-item">-->
-<!--                    <div class="row">-->
-<!--                        <div class="col-xs-2">-->
-<!--                            <img src="https://scontent-iad3-1.xx.fbcdn.net/hprofile-xap1/v/t1.0-1/c0.0.50.50/p50x50/994065_10202564407381357_1040448855_n.jpg?oh=501ea21005d2d9c5bea26a098853a1a9&oe=5769A76F" alt="" />-->
-<!--                        </div>-->
-<!--                        <div class="col-xs-10">-->
-<!--                            <div class="primary-text">-->
-<!--                                <span class="emphasize">Sean Crenshaw</span>-->
-<!--                                <span> posted in </span>-->
-<!--                                <span class="emphasize">Hackers@VT</span>-->
-<!--                                <span>.</span>-->
-<!--                            </div>-->
-<!--                            <div class="secondary-text">-->
-<!--                                <img class="icon" src="https://static.xx.fbcdn.net/rsrc.php/v2/yT/r/sCqYwJAS31w.png" alt="" />-->
-<!--                                <span>10 hours ago</span>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </a>-->
-<!--                <a href="http://bootply.com/tagged/modal" class="list-group-item">-->
-<!--                    <div class="row">-->
-<!--                        <div class="col-xs-2">-->
-<!--                            <img alt="" src="https://scontent-iad3-1.xx.fbcdn.net/hprofile-xfp1/v/t1.0-1/p50x50/12508832_715473358553485_2339359682910018925_n.jpg?oh=bb8a8e6ec3116399fef3a1d6aad601b7&oe=57276CEA" />-->
-<!--                        </div>-->
-<!--                        <div class="col-xs-10">-->
-<!--                            <div class="primary-text">-->
-<!--                                <span class="emphasize">Mykayla Fernandes</span>-->
-<!--                                <span>, </span>-->
-<!--                                <span class="emphasize">Sean Crenshaw</span>-->
-<!--                                <span> and </span>-->
-<!--                                <span class="emphasize">Angela Correa</span>-->
-<!--                                <span> posted in </span>-->
-<!--                                <span class="emphasize">Hackers@VT</span>-->
-<!--                                <span>.</span>-->
-<!--                            </div>-->
-<!--                            <div class="secondary-text">-->
-<!--                                <img alt="" class="icon" src="https://static.xx.fbcdn.net/rsrc.php/v2/yT/r/sCqYwJAS31w.png" />-->
-<!--                                <span>Yesterday at 11:43am</span>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </a>-->
-<!--                <a href="http://bootply.com/tagged/modal" class="list-group-item">-->
-<!--                    <div class="row">-->
-<!--                        <div class="col-xs-2">-->
-<!--                            <img src="https://scontent-iad3-1.xx.fbcdn.net/hprofile-ash2/v/t1.0-1/p50x50/10154151_10152335171521283_1892074684800973589_n.jpg?oh=dff97a406986923f152a099fb0b66cb6&oe=5733F4F5" alt="" />-->
-<!--                        </div>-->
-<!--                        <div class="col-xs-10">-->
-<!--                            <div class="primary-text">-->
-<!--                                <div>-->
-<!--                                    <span class="emphasize">Stephano Gachet</span>-->
-<!--                                    <span>'s birthday was on February 6.</span>-->
-<!--                                </div>-->
-<!--                            </div>-->
-<!--                            <div class="secondary-text">-->
-<!--                                <img class="icon" src="https://static.xx.fbcdn.net/rsrc.php/v2/ys/r/LZiIcH_lPU4.png" alt="" />-->
-<!--                                <span>Yesterday at 10:23am</span>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </a>-->
-<!--                <a href="http://bootply.com/tagged/modal" class="list-group-item">-->
-<!--                    <div class="row">-->
-<!--                        <div class="col-xs-2">-->
-<!--                            <img src="https://scontent-iad3-1.xx.fbcdn.net/hprofile-xfa1/v/t1.0-1/c8.0.50.50/p50x50/10359905_10202817934555874_4872112707532581908_n.jpg?oh=94443dfa492d911683dc85a371c777a9&oe=57632FAC" alt="" />-->
-<!--                        </div>-->
-<!--                        <div class="col-xs-10">-->
-<!--                            <div class="conversation-name">-->
-<!--                                <div>-->
-<!--                                    <span class="emphasize">Jakub Galád ヅ</span>-->
-<!--                                </div>-->
-<!--                            </div>-->
-<!--                            <div class="conversation-text">-->
-<!--                                <span>Michal: cely den kordy pocuvas jak biju o seba <span class="_1az _1a- _2ft"></span> a zajtra dalsich 13 hodin...daj si</span>-->
-<!--                            </div>-->
-<!--                            <div class="conversation-timestamp">-->
-<!--                                <span>9:55am</span>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </a>-->
+            <div id="main-section" class="list-group" style="display: none;"></div>
+            <div id="error-section" class="list-group" style="display: none;">
+                <div class="row list-group-item">
+                    <div class="col-xs-12">
+                        <span id="error" class="center-block"></span>
+                    </div>
+                </div>
+            </div>
+            <div id="login-section" class="list-group">
+                <div class="row list-group-item">
+                    <div class="col-xs-12">
+                        <div class="center-block">
+                            <a href="https://www.facebook.com/" class="btn btn-primary btn-lg active openable" role="button">Log In</a>
+                        </div>
+                    </div>
+                </div>
             </div>
             <!-- /content -->
 
         </section>
         <!-- /main section -->
         <!-- footer -->
-        <footer class="row">
+        <footer class="row authorized" style="display: none;">
 
             <div class="modal-footer">
                 <a id="footer" href="#" class="center-block openable">See All</a>

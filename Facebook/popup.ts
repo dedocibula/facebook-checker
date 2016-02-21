@@ -8,6 +8,10 @@
         navigationLinks: string;
         mainContainer: string;
         mainSection: string;
+        loginSection: string;
+        errorSection: string;
+        errorMessage: string;
+        authorizedSections: string,
         loaderImage: string;
         footerLink: string;
 
@@ -23,7 +27,6 @@
         private navigationLinks: string;
 
         private $body: JQuery;
-        private $mainContainer: JQuery;
 
         constructor(settings: ISettings, renderer: Renderer, backendService: Api.IBackendService) {
             this.renderer = renderer;
@@ -33,7 +36,6 @@
             this.navigationLinks = settings.navigationLinks;
 
             this.$body = $("body");
-            this.$mainContainer = $(settings.mainContainer);
         }
 
         public registerGlobalListeners(): void {
@@ -61,9 +63,15 @@
                         this.renderer.renderMessages(response.messages);
                     else
                         this.renderer.renderNotifications(response.notifications);
-                    this.renderer.toggleLoading();
-                    this.$mainContainer.css("visibility", "visible");
+                    this.renderer.displayMain();
+                } else if (response.status === Entities.ResponseStatus.Unauthorized) {
+                    this.renderer.displayUnauthorized();
+                } else if (response.status === Entities.ResponseStatus.IllegalToken) {
+                    this.renderer.displayError("Something went wrong! Try closing an opening extension window.");
+                } else if (response.status === Entities.ResponseStatus.ConnectionRejected) {
+                    this.renderer.displayError("We couldn't establish connection to Facebook! Make sure you have access to the Internet.");
                 }
+                this.renderer.toggleLoading(true);
             });
         }
     }
@@ -74,6 +82,10 @@
 
         private $mainContainer: JQuery;
         private $mainSection: JQuery;
+        private $loginSection: JQuery;
+        private $errorSection: JQuery;
+        private $errorMessage: JQuery;
+        private $authorizedSections: JQuery;
         private $loaderImage: JQuery;
         private footerLink: HTMLLinkElement;
 
@@ -86,6 +98,10 @@
 
             this.$mainContainer = $(settings.mainContainer);
             this.$mainSection = $(settings.mainSection);
+            this.$loginSection = $(settings.loginSection);
+            this.$errorSection = $(settings.errorSection);
+            this.$errorMessage = $(settings.errorMessage);
+            this.$authorizedSections = $(settings.authorizedSections);
             this.$loaderImage = $(settings.loaderImage);
             this.footerLink = $(settings.footerLink)[0] as HTMLLinkElement;
 
@@ -102,9 +118,33 @@
             this.footerLink.href = this.messageBoxUrl;
         }
 
-        public toggleLoading(): void {
+        public toggleLoading(showContainer: boolean = false): void {
             this.$loaderImage.css("top", (this.$mainContainer.height() / 2 - 25) + "px").toggle();
             this.$mainContainer.css("pointer-events", this.$mainContainer.css("pointer-events") === "none" ? "all" : "none").toggleClass("loading");
+            if (showContainer)
+                this.$mainContainer.css("visibility", "visible");
+        }
+
+        public displayMain(): void {
+            this.$authorizedSections.show();
+            this.$errorSection.hide();
+            this.$loginSection.hide();
+            this.$mainSection.show();
+        }
+
+        public displayUnauthorized(): void {
+            this.$authorizedSections.hide();
+            this.$errorSection.hide();
+            this.$mainSection.hide();
+            this.$loginSection.show();
+        }
+
+        public displayError(error: string): void {
+            this.$authorizedSections.hide();
+            this.$loginSection.hide();
+            this.$mainSection.hide();
+            this.$errorMessage.text(error);
+            this.$errorSection.show();
         }
 
         public makeSelected(element: HTMLElement): void {
@@ -175,6 +215,10 @@
             navigationLinks: "nav li",
             mainContainer: "#main",
             mainSection: "#main-section",
+            loginSection: "#login-section",
+            errorSection: "#error-section",
+            errorMessage: "#error",
+            authorizedSections: ".authorized",
             loaderImage: "#loader",
             footerLink: "#footer",
 
