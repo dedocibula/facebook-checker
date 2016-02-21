@@ -124,7 +124,24 @@
             });
 
             Handlebars.registerHelper("getName", (authors: Entities.Author[]) => {
-                return authors[0].fullName;
+                return authors.map(author => author.fullName).join(", ");
+            });
+
+            Handlebars.registerHelper("emphasize", (notification: Entities.Notification) => {
+                let text: string = "", current: number = 0;
+                const original: string = notification.text, emphases: Entities.Range[] = notification.emphases;
+                for (let i = 0; i < original.length; i++) {
+                    if (current < emphases.length) {
+                        if (i === emphases[current].from) {
+                            text += "<span class='emphasize'>";
+                        } else if (i === emphases[current].to) {
+                            text += "</span>";
+                            current++;
+                        }
+                    }
+                    text += original[i];
+                }
+                return text;
             });
         }
     }

@@ -48,22 +48,14 @@
         Read
     }
 
-    export const enum NotificationType {
-        GroupActivity,
-        BirthdayReminder,
-        FeedComment,
-        Like,
-        LikeTagged,
-        PageFanInvite,
-        PhotoTag,
-        Poke,
-        MentionsComment,
-        LoginAlert,
-        PlanUserInvited,
-        Wall,
-        EventCommentMention,
-        AdminPlanMallActivity,
-        TaggedWithStory
+    export class Range {
+        public from: number;
+        public to: number;
+
+        constructor(from: number, to: number) {
+            this.from = from;
+            this.to = to;
+        }
     }
 
     export class Author {
@@ -99,13 +91,13 @@
     }
 
     export class Notification extends FacebookEntity {
-        public type: NotificationType;
+        public emphases: Range[];
         public icon: string;
         public attachment: string;
 
-        constructor(id: string, text: string, authors: Author[], picture: string, type: NotificationType, state: State, timestamp: string, url: string, icon: string, attachment?: string) {
+        constructor(id: string, text: string, emphases: Range[], authors: Author[], picture: string, state: State, timestamp: string, url: string, icon: string, attachment?: string) {
             super(id, text, authors, picture, state, timestamp, url);
-            this.type = type;
+            this.emphases = emphases;
             this.icon = icon;
             this.attachment = attachment;
         }

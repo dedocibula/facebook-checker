@@ -337,14 +337,14 @@
 
         private parseNotifications(json: any): Entities.Notification[] {
             return (json.nodes as Array<any>).map(notification => {
+                const emphases: Entities.Range[] = (notification.title.ranges as Array<any>).map(entity => new Entities.Range(entity.offset, entity.offset + entity.length));
                 const authors: Entities.Author[] = (notification.actors as Array<any>).map(author => new Entities.Author(author.name, author.profile_picture.uri));
-                const type: Entities.NotificationType = this.parseNotificationType(notification.notif_type);
                 const state: Entities.State = this.parseState(notification.seen_state as string);
                 const timestamp: string = this.formTimestampText(notification.timestamp.text, json.servertime - notification.timestamp.time);
                 const attachment: string = (notification.attachments.length > 0 && notification.attachments[0].media) ?
                     notification.attachments[0].media.image.uri : null;
 
-                return new Entities.Notification(notification.id, notification.title.text, authors, authors[0].profilePicture, type, state, timestamp, notification.url, notification.icon.uri, attachment);
+                return new Entities.Notification(notification.id, notification.title.text, emphases, authors, authors[0].profilePicture, state, timestamp, notification.url, notification.icon.uri, attachment);
             });
         }
 
@@ -367,44 +367,6 @@
 
                 return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.timestamp_relative, url);
             });
-        }
-
-        private parseNotificationType(type: string): Entities.NotificationType {
-            // TODO sanitize
-            switch (type) {
-                case "group_activity":
-                    return Entities.NotificationType.GroupActivity;
-                case "birthday_reminder":
-                    return Entities.NotificationType.BirthdayReminder;
-                case "fbpage_fan_invite":
-                    return Entities.NotificationType.PageFanInvite;
-                case "admin_plan_mall_activity":
-                    return Entities.NotificationType.AdminPlanMallActivity;
-                case "event_comment_mention":
-                    return Entities.NotificationType.EventCommentMention;
-                case "feed_comment":
-                    return Entities.NotificationType.FeedComment;
-                case "like":
-                    return Entities.NotificationType.Like;
-                case "like_tagged":
-                    return Entities.NotificationType.LikeTagged;
-                case "login_alerts_new_device":
-                    return Entities.NotificationType.LoginAlert;
-                case "mentions_comment":
-                    return Entities.NotificationType.MentionsComment;
-                case "photo_tag":
-                    return Entities.NotificationType.PhotoTag;
-                case "plan_user_invited":
-                    return Entities.NotificationType.PlanUserInvited;
-                case "poke":
-                    return Entities.NotificationType.Poke;
-                case "tagged_with_story":
-                    return Entities.NotificationType.TaggedWithStory;
-                case "wall":
-                    return Entities.NotificationType.Wall;
-                default:
-                    return null;
-            }
         }
 
         private parseState(state: number | string): Entities.State {
