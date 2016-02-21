@@ -311,13 +311,12 @@
 
         public getExternalResourceAsync(url: string): Promise<string> {
             return new Promise<string>(resolve => {
-                if (this.localResources[url])
-                    resolve(this.localResources[url]);
                 const xhr = new XMLHttpRequest();
                 xhr.open("GET", url);
                 xhr.responseType = "blob";
                 xhr.onload = () => {
                     if (xhr.status === 200) {
+                        window.URL.revokeObjectURL(this.localResources[url]);
                         this.localResources[url] = window.URL.createObjectURL(xhr.response);
                         resolve(this.localResources[url]);
                     } else {
