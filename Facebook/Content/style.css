@@ -304,6 +304,11 @@ small.text-muted {
     margin-bottom: 2px;
 }
 
+.primary-text {
+    max-height: 35px;
+    overflow: hidden;
+}
+
 .secondary-text, .conversation-text, .conversation-timestamp {
     color: #999;
 }

@@ -18,6 +18,7 @@
         authorizedSections: string,
         loaderImage: string;
         footerLink: string;
+        mainListItems: string;
 
         notificationsTemplate: string;
         messagesTemplate: string;
@@ -33,6 +34,7 @@
         private openableLinks: string;
         private navigationLinks: string;
         private readButtons: string;
+        private mainListItems: string;
 
         private $body: JQuery;
 
@@ -46,6 +48,7 @@
             this.openableLinks = settings.openableLinks;
             this.navigationLinks = settings.navigationLinks;
             this.readButtons = settings.readButtons;
+            this.mainListItems = settings.mainListItems;
 
             this.$body = $("body");
         }
@@ -54,26 +57,34 @@
             const self = this;
             self.$body
                 .off("click")
-                .on("click", self.readButtons, function (event) {
+                .on("click", self.readButtons, function(event) {
                     event.stopPropagation();
-                    const button: HTMLElement = (this as HTMLElement);
+                    const button: HTMLElement = this as HTMLElement;
                     const readInfo: Entities.ReadInfo = JSON.parse(button.dataset["readInfo"]) as Entities.ReadInfo;
-                    if (readInfo.state !== Entities.State.Read) {
-                        self.backendService.markRead(readInfo, (response: Entities.Response) => {
-                            if (response.status === Entities.ResponseStatus.Ok)
-                                self.renderer.updateUnreadState(readInfo.entityType, button);
-                        });
-                    }
+                    if (readInfo.state === Entities.State.Read)
+                        return;
+                    self.backendService.markRead(readInfo, (response: Entities.Response) => {
+                        if (response.status === Entities.ResponseStatus.Ok)
+                            self.renderer.updateUnreadState(readInfo.entityType, button);
+                    });
                 })
-                .on("click", self.openableLinks, function (event) {
+                .on("click", self.openableLinks, function(event) {
                     event.preventDefault();
                     const link: HTMLLinkElement = this as HTMLLinkElement;
                     self.backendService.openLink(link.href);
                 })
-                .on("click", self.navigationLinks, function (event) {
+                .on("click", self.navigationLinks, function(event) {
                     event.preventDefault();
                     const link: HTMLElement = this as HTMLElement;
                     self.load(Entities.EntityType[(link.id.charAt(0).toUpperCase() + link.id.slice(1))]);
+                })
+                .off("mouseover mouseout")
+                .on("mouseover mouseout", self.mainListItems, function() {
+                    const $button: JQuery = $(this).find(self.readButtons);
+                    if (event.type === "mouseover")
+                        $button.show();
+                    else
+                        $button.hide();
                 });
         }
 
@@ -313,6 +324,7 @@
             authorizedSections: ".authorized",
             loaderImage: "#loader",
             footerLink: "#footer",
+            mainListItems: "#main-section .list-group-item",
 
             notificationsTemplate: "notifications",
             messagesTemplate: "messages"

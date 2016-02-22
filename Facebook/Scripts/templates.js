@@ -21,7 +21,7 @@ templates['messages'] = template({"1":function(depth0,helpers,partials,data) {
     + alias3(((helper = (helper = helpers.timestamp || (depth0 != null ? depth0.timestamp : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"timestamp","hash":{},"data":data}) : helper)))
     + "</span>\r\n            </div>\r\n        </div>\r\n        <div class=\"read-button-container\">\r\n            <div title=\"Read\" class=\"read-button\" data-read-info=\""
     + alias3((helpers.serializeReadInfo || (depth0 && depth0.serializeReadInfo) || alias1).call(depth0,depth0,{"name":"serializeReadInfo","hash":{},"data":data}))
-    + "\"></div>\r\n        </div>\r\n    </div>\r\n</a>\r\n";
+    + "\" style=\"display:none;\"></div>\r\n        </div>\r\n    </div>\r\n</a>\r\n";
 },"3":function(depth0,helpers,partials,data) {
     return "<div class=\"row list-group-item\">\r\n    <div class=\"col-xs-12\">\r\n        <span class=\"center-block\">No messages found</span>\r\n    </div>\r\n</div>\r\n";
 },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
@@ -50,7 +50,7 @@ templates['notifications'] = template({"1":function(depth0,helpers,partials,data
     + alias3(((helper = (helper = helpers.timestamp || (depth0 != null ? depth0.timestamp : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"timestamp","hash":{},"data":data}) : helper)))
     + "</span>\r\n            </div>\r\n        </div>\r\n        <div class=\"read-button-container\">\r\n            <div title=\"Read\" class=\"read-button\" data-read-info=\""
     + alias3((helpers.serializeReadInfo || (depth0 && depth0.serializeReadInfo) || alias1).call(depth0,depth0,{"name":"serializeReadInfo","hash":{},"data":data}))
-    + "\"></div>\r\n        </div>\r\n    </div>\r\n</a>\r\n";
+    + "\" style=\"display:none;\"></div>\r\n        </div>\r\n    </div>\r\n</a>\r\n";
 },"3":function(depth0,helpers,partials,data) {
     return "<div class=\"row list-group-item\">\r\n    <div class=\"col-xs-12\">\r\n        <span class=\"center-block\">No notifications found</span>\r\n    </div>\r\n</div>\r\n";
 },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
