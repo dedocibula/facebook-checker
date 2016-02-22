@@ -58,6 +58,20 @@
                 this.chrome.createOrUpdateTab(url);
         }
 
+        public markRead(readInfo: Entities.ReadInfo, onReady?: (response: Entities.Response) => void): void {
+            if (readInfo.state === Entities.State.Read)
+                return;
+            this.try(readInfo.entityType === Entities.EntityType.Messages ?
+                (info: Entities.FacebookInfo) => this.loader.markMessageRead(info.token, readInfo.alertId) :
+                (info: Entities.FacebookInfo) => this.loader.markNotificationRead(info.token, readInfo.alertId),
+                () => new Entities.Response(Entities.ResponseStatus.Ok)).then(response => {
+                    if (typeof onReady === "function")
+                        onReady(response);
+                    if (response.status === Entities.ResponseStatus.Ok)
+                        this.reloadAll().then(secondResponse => this.processResponse(secondResponse));
+                });
+        }
+
         public stop(): void {
             if (!this.timer)
                 return;
@@ -66,36 +80,20 @@
         }
 
         private reloadAll(): Promise<Entities.Response> {
-            return new Promise<Entities.Response>(resolve => {
-                (this.info ? Promise.resolve(this.info) : this.loader.getInfoAsync()).then(info => {
-                    this.info = info;
-                    Promise.all<Entities.FacebookEntity[]>([
-                        this.loader.getNotificationsAsync(info.token),
-                        this.loader.getMessagesAsync(info.token, info.profileUrl)
-                    ]).then(entities => {
-                        const newNotifications: number = entities[0].filter(entity => entity.state !== Entities.State.Read).length;
-                        const newMessages: number = entities[1].filter(entity => entity.state !== Entities.State.Read).length;
+            return this.try((info: Entities.FacebookInfo) => Promise.all<Entities.FacebookEntity[]>([
+                this.loader.getNotificationsAsync(info.token),
+                this.loader.getMessagesAsync(info.token, info.profileUrl)
+            ]), (entities: Entities.FacebookEntity[][]) => {
+                const newNotifications: number = entities[0].filter(entity => entity.state !== Entities.State.Read).length;
+                const newMessages: number = entities[1].filter(entity => entity.state !== Entities.State.Read).length;
 
-                        resolve(new Entities.Response(Entities.ResponseStatus.Ok, newNotifications, newMessages,
-                            (entities[0] as Entities.Notification[]), (entities[1] as Entities.Message[])));
-                        this.online = true;
-                    }, (error: any) => {
-                        this.info = null;
-                        console.error(`Date: ${new Date()}, ${error.stack}`);
-
-                        resolve(new Entities.Response(Entities.ResponseStatus[error.message as string]));
-                        this.online = false;
-                    });
-                }, (error: any) => {
-                    console.error(`Date: ${new Date()}, ${error.stack}`);
-
-                    resolve(new Entities.Response(Entities.ResponseStatus[error.message as string]));
-                    this.online = false;
-                });
+                return new Entities.Response(Entities.ResponseStatus.Ok, newNotifications, newMessages,
+                    (entities[0] as Entities.Notification[]), (entities[1] as Entities.Message[]));
             });
         }
 
         private processResponse(response: Entities.Response): void {
+            this.online = response.status === Entities.ResponseStatus.Ok;
             if (response.status !== Entities.ResponseStatus.Ok)
                 return;
 
@@ -115,6 +113,23 @@
             }
 
             this.chrome.updateUnreadCounter(response.newMessages + response.newNotifications);
+        }
+
+        private try<T>(action: (info: Entities.FacebookInfo) => Promise<T>, mapper: (result: T) => Entities.Response): Promise<Entities.Response> {
+            return new Promise<Entities.Response>(resolve => {
+                (this.info ? Promise.resolve(this.info) : this.loader.getInfoAsync()).then(info => {
+                    this.info = info;
+                    action(info).then((result: T) => {
+                        resolve(mapper(result));
+                    }, (error: any) => {
+                        console.error(`Date: ${new Date()}, ${error.stack}`);
+                        resolve(new Entities.Response(Entities.ResponseStatus[error.message as string]));
+                    });
+                }, (error: any) => {
+                    console.error(`Date: ${new Date()}, ${error.stack}`);
+                    resolve(new Entities.Response(Entities.ResponseStatus[error.message as string]));
+                });
+            });
         }
 
         private notifyOnce(entity: Entities.FacebookEntity): void {
@@ -241,6 +256,9 @@
         private static get NOTIFICATION_URI(): string { return "/ajax/notifications/client/get.php"; }
         private static get MESSAGE_URI(): string { return "/ajax/mercury/threadlist_info.php"; }
 
+        private static get MARK_NOTIFICATION_READ_URI(): string { return "/ajax/notifications/mark_read.php"; }
+        private static get MARK_MESSAGE_READ_URI(): string { return "/ajax/mercury/change_read_status.php"; }
+
         private settings: ISettings;
         private localResources: { [url: string]: string };
 
@@ -327,6 +345,44 @@
             });
         }
 
+        public markNotificationRead(token: string, id: string): Promise<void> {
+            return new Promise<void>((resolve, reject) => {
+                $.ajax({
+                    url: this.settings.baseUrl + Loader.MARK_NOTIFICATION_READ_URI + this.settings.uriSuffix,
+                    method: "GET",
+                    accepts: "*/*",
+                    dataType: "text",
+                    data: { "alert_ids[0]": id, from_read_button: true, fb_dtsg: token }
+                }).done(() => {
+                    resolve();
+                }).fail(() => {
+                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                });
+            });
+        }
+
+        public markMessageRead(token: string, id: string): Promise<void> {
+            return new Promise<void>((resolve, reject) => {
+                const data: any = {};
+                data[`ids[${id}]`] = true;
+                data.fb_dtsg = token;
+                data.shouldSendReadReceipt = true;
+                data.__a = 1;
+
+                $.ajax({
+                    url: this.settings.baseUrl + Loader.MARK_MESSAGE_READ_URI + this.settings.uriSuffix,
+                    method: "POST",
+                    accepts: "*/*",
+                    dataType: "text",
+                    data: data
+                }).done(() => {
+                    resolve();
+                }).fail(() => {
+                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                });
+            });
+        }
+
         private parseInfo(result: string): Entities.FacebookInfo {
             const token: string = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
             const profileUrl: string = ($(result).find("a[title='Profile']")[0] as HTMLLinkElement).href;
@@ -343,7 +399,7 @@
                 const attachment: string = (notification.attachments.length > 0 && notification.attachments[0].media) ?
                     notification.attachments[0].media.image.uri : null;
 
-                return new Entities.Notification(notification.id, notification.title.text, emphases, authors, authors[0].profilePicture, state, timestamp, notification.url, notification.icon.uri, attachment);
+                return new Entities.Notification(notification.id, notification.title.text, emphases, authors, authors[0].profilePicture, state, notification.alert_id.split(":")[1], timestamp, notification.url, notification.icon.uri, attachment);
             });
         }
 
@@ -364,7 +420,7 @@
                 const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
                 const url: string = this.settings.baseUrl + prefix + message.thread_fbid;
 
-                return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.timestamp_relative, url);
+                return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.thread_fbid, message.timestamp_relative, url);
             });
         }
 

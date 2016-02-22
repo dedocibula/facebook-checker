@@ -8,6 +8,7 @@
 
         openableLinks: string;
         navigationLinks: string;
+        readButtons: string;
         navigationMappings: { [type: string]: string };
         mainContainer: string;
         mainSection: string;
@@ -31,6 +32,7 @@
 
         private openableLinks: string;
         private navigationLinks: string;
+        private readButtons: string;
 
         private $body: JQuery;
 
@@ -43,6 +45,7 @@
 
             this.openableLinks = settings.openableLinks;
             this.navigationLinks = settings.navigationLinks;
+            this.readButtons = settings.readButtons;
 
             this.$body = $("body");
         }
@@ -51,6 +54,17 @@
             const self = this;
             self.$body
                 .off("click")
+                .on("click", self.readButtons, function (event) {
+                    event.stopPropagation();
+                    const button: HTMLElement = (this as HTMLElement);
+                    const readInfo: Entities.ReadInfo = JSON.parse(button.dataset["readInfo"]) as Entities.ReadInfo;
+                    if (readInfo.state !== Entities.State.Read) {
+                        self.backendService.markRead(readInfo, (response: Entities.Response) => {
+                            if (response.status === Entities.ResponseStatus.Ok)
+                                self.renderer.updateUnreadState(readInfo.entityType, button);
+                        });
+                    }
+                })
                 .on("click", self.openableLinks, function (event) {
                     event.preventDefault();
                     const link: HTMLLinkElement = this as HTMLLinkElement;
@@ -107,10 +121,10 @@
         }
 
         private updateHeaders(response: Entities.Response): void {
-            const counts: { [type: string]: number } = {};
-            counts[Entities.EntityType[Entities.EntityType.Notifications]] = response.newNotifications;
-            counts[Entities.EntityType[Entities.EntityType.Messages]] = response.newMessages;
-            this.renderer.updateUnreadCounts(counts);
+            this.renderer.updateUnreadCounts(
+                new Entities.Pair(Entities.EntityType[Entities.EntityType.Notifications], response.newNotifications),
+                new Entities.Pair(Entities.EntityType[Entities.EntityType.Messages], response.newMessages)
+            );
         }
     }
 
@@ -160,11 +174,17 @@
             this.makeSelected(Entities.EntityType.Messages);
         }
 
-        public updateUnreadCounts(counts: { [type: string]: number }): void {
-            for (let type in counts) {
-                const $link: JQuery = this.$navigationMappings[type].find("a");
-                const original = $link.text().split(" (")[0];
-                $link.text(original + (counts[type] === 0 ? "" : ` (${counts[type]})`));
+        public updateUnreadState(entityType: Entities.EntityType, button: HTMLElement): void {
+            $(button).closest("a").removeClass("new-list-item");
+            const entityString: string = Entities.EntityType[entityType];
+            this.updateUnreadCounts(new Entities.Pair(entityString, this.$navigationMappings[entityString].data("unread") as number));
+        }
+
+        public updateUnreadCounts(...counts: Entities.Pair<string, number>[]): void {
+            for (let pair of counts) {
+                const $link: JQuery = this.$navigationMappings[pair.first].find("a");
+                const original = $link.html().split(" (")[0];
+                $link.html(original + (pair.second === 0 ? "" : ` (${pair.second})`)).data("unread", pair.second);
             }
         }
 
@@ -227,6 +247,10 @@
                 }
                 return text;
             });
+
+            Handlebars.registerHelper("serializeReadInfo", (entity: Entities.FacebookEntity) => {
+                return JSON.stringify(new Entities.ReadInfo(entity.type, entity.state, entity.alertId));
+            });
         }
 
         private makeSelected(type: Entities.EntityType): void {
@@ -238,7 +262,8 @@
         private set navigationMappings(navigationMappings: { [type: string]: string }) {
             this.$navigationMappings = {};
             for (let type in navigationMappings)
-                this.$navigationMappings[type] = $(navigationMappings[type]);
+                if (navigationMappings.hasOwnProperty(type))
+                    this.$navigationMappings[type] = $(navigationMappings[type]);
         }
     }
 
@@ -249,6 +274,10 @@
 
         public openLink(url: string): void {
             this.internalRequest("openLink", [url]);
+        }
+
+        public markRead(readInfo: Entities.ReadInfo, onReady?: (response: Entities.Response) => void): void {
+            this.internalRequest("markRead", [readInfo], onReady);
         }
 
         private internalRequest(action: string, parameters?: any[], onReady?: (response: Entities.Response) => void): void {
@@ -271,9 +300,10 @@
 
             openableLinks: "a.openable",
             navigationLinks: "nav li",
+            readButtons: ".read-button",
             navigationMappings: {
-                "Notifications": "#notifications",
-                "Messages": "#messages"
+                Notifications: "#notifications",
+                Messages: "#messages"
             },
             mainContainer: "#main",
             mainSection: "#main-section",

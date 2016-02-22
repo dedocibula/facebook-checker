@@ -332,15 +332,39 @@ small.text-muted {
     color: #fff;
 }
 
+.read-button-container {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.read-button {
+    background-image: url(https://static.xx.fbcdn.net/rsrc.php/v2/yd/r/-a65tghqbmY.png);
+    background-repeat: no-repeat;
+    background-size: auto;
+    background-position-x: 0;
+    background-position-y: -99px;
+    height: 15px;
+    width: 15px;
+}
+
 .new-list-item {
     background-color: #ebeef4;
 }
+
+    .new-list-item .read-button {
+        background-position-y: -63px;
+    }
+
+    .new-list-item .read-button:hover {
+        background-position-y: -45px;
+    }
 
 #loader {
     position: absolute;
     top: 40px;
     left: 185px;
-    z-index: 100
+    z-index: 100;
 }
 
 .loading {

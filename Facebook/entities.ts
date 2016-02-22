@@ -63,6 +63,28 @@
         }
     }
 
+    export class Pair<T1, T2> {
+        public first: T1;
+        public second: T2;
+
+        constructor(first: T1, second: T2) {
+            this.first = first;
+            this.second = second;
+        }
+    }
+
+    export class ReadInfo {
+        public entityType: EntityType;
+        public state: State;
+        public alertId: string;
+
+        constructor(entityType: EntityType, state: State, alertId: string) {
+            this.entityType = entityType;
+            this.state = state;
+            this.alertId = alertId;
+        }
+    }
+
     export class Author {
         public fullName: string;
         public profilePicture: string;
@@ -77,19 +99,23 @@
 
     export abstract class FacebookEntity {
         public id: string;
+        public type: EntityType;
         public text: string;
         public authors: Author[];
         public picture: string;
         public state: State;
+        public alertId: string;
         public timestamp: string;
         public url: string;
 
-        constructor(id: string, text: string, authors: Author[], picture: string, state: State, timestamp: string, url: string) {
+        constructor(id: string, type: EntityType, text: string, authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string) {
             this.id = id;
+            this.type = type;
             this.text = text;
             this.authors = authors;
             this.picture = picture;
             this.state = state;
+            this.alertId = alertId;
             this.timestamp = timestamp;
             this.url = url;
         }
@@ -100,8 +126,8 @@
         public icon: string;
         public attachment: string;
 
-        constructor(id: string, text: string, emphases: Range[], authors: Author[], picture: string, state: State, timestamp: string, url: string, icon: string, attachment?: string) {
-            super(id, text, authors, picture, state, timestamp, url);
+        constructor(id: string, text: string, emphases: Range[], authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string, icon: string, attachment?: string) {
+            super(id, EntityType.Notifications, text, authors, picture, state, alertId, timestamp, url);
             this.emphases = emphases;
             this.icon = icon;
             this.attachment = attachment;
@@ -111,8 +137,8 @@
     export class Message extends FacebookEntity {
         public header: string;
 
-        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, timestamp: string, url: string) {
-            super(id, text, authors, picture, state, timestamp, url);
+        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string) {
+            super(id, EntityType.Messages, text, authors, picture, state, alertId, timestamp, url);
             this.header = header;
         }
     }
