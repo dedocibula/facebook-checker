@@ -349,7 +349,7 @@
             return new Promise<void>((resolve, reject) => {
                 $.ajax({
                     url: this.settings.baseUrl + Loader.MARK_NOTIFICATION_READ_URI + this.settings.uriSuffix,
-                    method: "GET",
+                    method: "POST",
                     accepts: "*/*",
                     dataType: "text",
                     data: { "alert_ids[0]": id, from_read_button: true, fb_dtsg: token }
@@ -446,7 +446,7 @@
                 return text;
             var minutes: number = Math.floor(timeInSeconds / 60);
             return (minutes < 60) ?
-                `${minutes} minute${minutes !== 1 ? "s" : ""} ago` :
+                (minutes === 0 ? "a few seconds ago" : `${minutes} minute${minutes !== 1 ? "s" : ""} ago`) :
                 `${Math.floor(minutes / 60)} hour${Math.floor(minutes / 60) !== 1 ? "s" : ""} ago`;
         }
     }
