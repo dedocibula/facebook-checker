@@ -376,3 +376,20 @@ small.text-muted {
     background-color: #eeeeee;
     opacity: .5;
 }
+
+.repliedLast, .seenByAll {
+    background-image: url(https://static.xx.fbcdn.net/rsrc.php/v2/yZ/r/a-ZN6WoEOje.png);
+    background-repeat: no-repeat;
+    background-size: auto;
+    display: inline-block;
+    height: 9px;
+    width: 10px;
+}
+
+.repliedLast {
+    background-position: -237px -416px;
+}
+
+.seenByAll {
+    background-position: -248px -416px;
+}

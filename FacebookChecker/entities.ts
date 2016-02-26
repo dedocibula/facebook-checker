@@ -136,10 +136,14 @@
 
     export class Message extends FacebookEntity {
         public header: string;
+        public repliedLast: boolean;
+        public seenByAll: boolean;
 
-        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string) {
+        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string, repliedLast: boolean, seenByAll: boolean) {
             super(id, EntityType.Messages, text, authors, picture, state, alertId, timestamp, url);
             this.header = header;
+            this.repliedLast = repliedLast;
+            this.seenByAll = seenByAll;
         }
     }
 }

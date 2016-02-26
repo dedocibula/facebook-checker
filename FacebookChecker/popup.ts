@@ -262,6 +262,10 @@
             Handlebars.registerHelper("serializeReadInfo", (entity: Entities.FacebookEntity) => {
                 return JSON.stringify(new Entities.ReadInfo(entity.type, entity.state, entity.alertId));
             });
+
+            Handlebars.registerHelper("displayStatus", (message: Entities.Message) => {
+                return !message.repliedLast ? message.text : `<span class="${message.seenByAll ? "seenByAll" : "repliedLast"}"></span> ${message.text}`;
+            });
         }
 
         private makeSelected(type: Entities.EntityType): void {

@@ -1,7 +1,7 @@
 (function() {
   var template = Handlebars.template, templates = Handlebars.templates = Handlebars.templates || {};
 templates['messages'] = template({"1":function(depth0,helpers,partials,data) {
-    var helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;
+    var stack1, helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;
 
   return "<a id=\""
     + alias3(((helper = (helper = helpers.id || (depth0 != null ? depth0.id : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"id","hash":{},"data":data}) : helper)))
@@ -16,7 +16,7 @@ templates['messages'] = template({"1":function(depth0,helpers,partials,data) {
     + "\" />\r\n        </div>\r\n        <div class=\"col-xs-10\">\r\n            <div class=\"conversation-name\">\r\n                <div>\r\n                    <span class=\"emphasize\">"
     + alias3(((helper = (helper = helpers.header || (depth0 != null ? depth0.header : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"header","hash":{},"data":data}) : helper)))
     + "</span>\r\n                </div>\r\n            </div>\r\n            <div class=\"conversation-text\">\r\n                "
-    + alias3(((helper = (helper = helpers.text || (depth0 != null ? depth0.text : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"text","hash":{},"data":data}) : helper)))
+    + ((stack1 = (helpers.displayStatus || (depth0 && depth0.displayStatus) || alias1).call(depth0,depth0,{"name":"displayStatus","hash":{},"data":data})) != null ? stack1 : "")
     + "\r\n            </div>\r\n            <div class=\"conversation-timestamp\">\r\n                <span>"
     + alias3(((helper = (helper = helpers.timestamp || (depth0 != null ? depth0.timestamp : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"timestamp","hash":{},"data":data}) : helper)))
     + "</span>\r\n            </div>\r\n        </div>\r\n        <div class=\"read-button-container\">\r\n            <div title=\"Read\" class=\"read-button\" data-read-info=\""
