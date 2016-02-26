@@ -2,7 +2,7 @@
 <a id="{{id}}" href="{{url}}" class="openable list-group-item {{checkNew state}}">
     <div class="row">
         <div class="col-xs-2">
-            <img src="{{picture}}" alt="{{getName authors}}" />
+            {{renderPicture authors}}
         </div>
         <div class="col-xs-10">
             <div class="conversation-name">
@@ -11,7 +11,7 @@
                 </div>
             </div>
             <div class="conversation-text">
-                {{{displayStatus this}}}
+                {{displayStatus this}}
             </div>
             <div class="conversation-timestamp">
                 <span>{{timestamp}}</span>

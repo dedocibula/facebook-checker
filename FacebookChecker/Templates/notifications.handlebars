@@ -2,11 +2,11 @@
 <a id="{{id}}" href="{{url}}" class="openable list-group-item {{checkNew state}}">
     <div class="row">
         <div class="col-xs-2">
-            <img src="{{picture}}" alt="{{getName authors}}" />
+            {{renderPicture authors}}
         </div>
         <div class="col-xs-10">
             <div class="primary-text">
-                {{{emphasize this}}}
+                {{emphasize this}}
             </div>
             <div class="secondary-text">
                 <img class="icon" src="{{icon}}" alt="" />

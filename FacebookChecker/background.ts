@@ -394,7 +394,7 @@
         private parseNotifications(json: any): Entities.Notification[] {
             return (json.nodes as Array<any>).map(notification => {
                 const emphases: Entities.Range[] = (notification.title.ranges as Array<any>).map(entity => new Entities.Range(entity.offset, entity.offset + entity.length));
-                const authors: Entities.Author[] = (notification.actors as Array<any>).map(author => new Entities.Author(author.name, author.profile_picture.uri));
+                const authors: Entities.Author[] = (notification.actors as Array<any>).map(author => new Entities.Author(author.name, author.profile_picture.uri, author.name.split(" ")[0]));
                 const state: Entities.State = this.parseState(notification.seen_state as string);
                 const timestamp: string = this.formTimestampText(notification.timestamp.text, json.servertime - notification.timestamp.time);
                 const attachment: string = (notification.attachments.length > 0 && notification.attachments[0].media) ?
@@ -415,8 +415,8 @@
             return (json.threads as Array<any>).map(message => {
                 const authors: Entities.Author[] = (message.participants as Array<string>).filter(participantId => participantId !== userId).map(participantId => participants[participantId]);
                 const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
-                const text: string = authors.length === 1 ? message.snippet : `${participants[message.snippet_sender].shortName}: ${message.snippet}`;
-                const picture: string = message.name.length === 0 ? authors[0].profilePicture : participants[message.snippet_sender].profilePicture;
+                const text: string = authors.length === 1 ? message.snippet : `${authors[0].shortName}: ${message.snippet}`;
+                const picture: string = authors[0].profilePicture;
                 const state: Entities.State = this.parseState(message.unread_count as number);
                 const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
                 const url: string = this.settings.baseUrl + prefix + message.thread_fbid;

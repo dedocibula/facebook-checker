@@ -19,6 +19,7 @@
         loaderImage: string;
         footerLink: string;
         mainListItems: string;
+        pictureSize: number;
 
         notificationsTemplate: string;
         messagesTemplate: string;
@@ -142,6 +143,7 @@
     class Renderer {
         private notificationsUrl: string;
         private messageBoxUrl: string;
+        private pictureSize: number;
 
         private $mainContainer: JQuery;
         private $mainSection: JQuery;
@@ -159,6 +161,7 @@
         constructor(settings: ISettings) {
             this.notificationsUrl = settings.baseUrl + settings.notificationsUri;
             this.messageBoxUrl = settings.baseUrl + settings.messageBoxUri;
+            this.pictureSize = settings.pictureSize;
 
             this.$mainContainer = $(settings.mainContainer);
             this.$mainSection = $(settings.mainSection);
@@ -238,10 +241,6 @@
                 return state !== Entities.State.Read ? "new-list-item" : "";
             });
 
-            Handlebars.registerHelper("getName", (authors: Entities.Author[]) => {
-                return authors.map(author => author.fullName).join(", ");
-            });
-
             Handlebars.registerHelper("emphasize", (notification: Entities.Notification) => {
                 let text: string = "", current: number = 0;
                 const original: string = notification.text, emphases: Entities.Range[] = notification.emphases;
@@ -256,7 +255,7 @@
                     }
                     text += original[i];
                 }
-                return text;
+                return new Handlebars.SafeString(text);
             });
 
             Handlebars.registerHelper("serializeReadInfo", (entity: Entities.FacebookEntity) => {
@@ -264,7 +263,23 @@
             });
 
             Handlebars.registerHelper("displayStatus", (message: Entities.Message) => {
-                return !message.repliedLast ? message.text : `<span class="${message.seenByAll ? "seenByAll" : "repliedLast"}"></span> ${message.text}`;
+                return !message.repliedLast ? message.text :
+                    new Handlebars.SafeString(`<span class="${message.seenByAll ? "seenByAll" : "repliedLast"}"></span> ${message.text}`);
+            });
+
+            Handlebars.registerHelper("renderPicture", (authors: Entities.Author[]) => {
+                const count = Math.min(authors.length, 3);
+                let text: string = "";
+                for (let i = 1; i <= count; i++) {
+                    const author: Entities.Author = authors[i - 1];
+                    const side: number = this.pictureSize / Math.pow(2, i < count ? i - 1 : Math.max(0, i - 2));
+                    const width: number = Math.round(side / count) * Math.max(1, count - 1);
+                    const margin: number = Math.round((width - side) / 2);
+                    text += `<div title="${author.shortName}" class="picture${i}" style="width: ${width}px;">\n`;
+                    text += `<img src="${author.profilePicture}" alt="${author.fullName}" height="${side}px" width="${side}px" style="margin-left: ${margin}px;" />\n`;
+                    text += `</div>\n`;
+                }
+                return new Handlebars.SafeString(text);
             });
         }
 
@@ -329,6 +344,7 @@
             loaderImage: "#loader",
             footerLink: "#footer",
             mainListItems: "#main-section .list-group-item",
+            pictureSize: 50,
 
             notificationsTemplate: "notifications",
             messagesTemplate: "messages"
