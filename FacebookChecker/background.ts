@@ -397,8 +397,9 @@
                 const authors: Entities.Author[] = (notification.actors as Array<any>).map(author => new Entities.Author(author.name, author.profile_picture.uri, author.name.split(" ")[0]));
                 const state: Entities.State = this.parseState(notification.seen_state as string);
                 const timestamp: string = this.formTimestampText(notification.timestamp.text, json.servertime - notification.timestamp.time);
-                const attachment: string = (notification.attachments.length > 0 && notification.attachments[0].media) ?
-                    notification.attachments[0].media.image.uri : null;
+                const attachment: string = (notification.attached_story && notification.attached_story.attachments && notification.attached_story.attachments[0] &&
+                    notification.attached_story.attachments[0].media && notification.attached_story.attachments[0].media.image) ?
+                    notification.attached_story.attachments[0].media.image.uri : null;
 
                 return new Entities.Notification(notification.id, notification.title.text, emphases, authors, authors[0].profilePicture, state, notification.alert_id.split(":")[1], timestamp, notification.url, notification.icon.uri, attachment);
             });

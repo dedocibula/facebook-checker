@@ -305,7 +305,7 @@ small.text-muted {
 }
 
 .primary-text {
-    max-height: 35px;
+    max-height: 50px;
     overflow: hidden;
 }
 
@@ -313,7 +313,7 @@ small.text-muted {
     color: #999;
 }
 
-.conversation-text {
+.conversation-name, .conversation-text {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
@@ -410,4 +410,13 @@ small.text-muted {
 
 .picture3 {
     border-top: 1px #ffffff solid;
+}
+
+.attachment {
+    margin-right: 7px;
+    float: right;
+    max-height: 55px;
+    background-color: #fff;
+    border: 1px solid #dcdee3;
+    padding: 2px;
 }

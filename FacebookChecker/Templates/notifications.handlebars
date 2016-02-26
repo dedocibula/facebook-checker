@@ -4,7 +4,8 @@
         <div class="col-xs-2">
             {{renderPicture authors}}
         </div>
-        <div class="col-xs-10">
+        
+        <div class="{{#if attachment}}col-xs-7{{else}}col-xs-10{{/if}}">
             <div class="primary-text">
                 {{emphasize this}}
             </div>
@@ -13,6 +14,11 @@
                 <span>{{timestamp}}</span>
             </div>
         </div>
+        {{#if attachment}}
+        <div class="col-xs-3">
+            <img src="{{attachment}}" class="attachment" alt="" />
+        </div>
+        {{/if}}
         <div class="read-button-container">
             <div title="Read" class="read-button" data-read-info="{{serializeReadInfo this}}" style="display:none;"></div>
         </div>
