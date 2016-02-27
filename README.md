@@ -8,6 +8,7 @@ Provided features:
 * Facebook Messages monitoring
 * Desktop alerts
 * Support for Mark as Read
+* Recipient read status
 
 ### Installation:
 
