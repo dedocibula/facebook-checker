@@ -263,8 +263,8 @@
             });
 
             Handlebars.registerHelper("displayStatus", (message: Entities.Message) => {
-                return !message.repliedLast ? message.text :
-                    new Handlebars.SafeString(`<span class="${message.seenByAll ? "seenByAll" : "repliedLast"}"></span> ${message.text}`);
+                return !message.repliedLast ? Handlebars.Utils.escapeExpression(message.text) :
+                    new Handlebars.SafeString(`<span class="${message.seenByAll ? "seenByAll" : "repliedLast"}"></span> ${Handlebars.Utils.escapeExpression(message.text)}`);
             });
 
             Handlebars.registerHelper("renderPicture", (authors: Entities.Author[]) => {
