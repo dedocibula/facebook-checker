@@ -416,12 +416,12 @@
             return (json.threads as Array<any>).map(message => {
                 const authors: Entities.Author[] = (message.participants as Array<string>).filter(participantId => participantId !== userId).map(participantId => participants[participantId]);
                 const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
-                const text: string = authors.length === 1 ? message.snippet : `${authors[0].shortName}: ${message.snippet}`;
+                const repliedLast: boolean = message.snippet_sender === userId;
+                const text: string = authors.length === 1 || repliedLast ? message.snippet : `${authors[0].shortName}: ${message.snippet}`;
                 const picture: string = authors[0].profilePicture;
                 const state: Entities.State = this.parseState(message.unread_count as number);
                 const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
                 const url: string = this.settings.baseUrl + prefix + message.thread_fbid;
-                const repliedLast: boolean = message.snippet_sender === userId;
                 const seenByAll: boolean = (json.roger[message.thread_fbid] && json.roger[message.thread_fbid][message.thread_fbid]) ?
                     json.roger[message.thread_fbid][message.thread_fbid] - message.last_message_timestamp === 0 : false;
 
