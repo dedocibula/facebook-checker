@@ -191,14 +191,14 @@
         public updateUnreadState(entityType: Entities.EntityType, button: HTMLElement): void {
             $(button).closest("a").removeClass("new-list-item");
             const entityString: string = Entities.EntityType[entityType];
-            this.updateUnreadCounts(new Entities.Pair(entityString, this.$navigationMappings[entityString].data("unread") as number));
+            this.updateUnreadCounts(new Entities.Pair(entityString, this.$navigationMappings[entityString].data("unread") as number - 1));
         }
 
         public updateUnreadCounts(...counts: Entities.Pair<string, number>[]): void {
             for (let pair of counts) {
                 const $link: JQuery = this.$navigationMappings[pair.first].find("a");
                 const original = $link.html().split(" (")[0];
-                $link.html(original + (pair.second === 0 ? "" : ` (${pair.second})`)).data("unread", pair.second);
+                $link.html(original + (pair.second === 0 ? "" : ` (${pair.second})`)).parent().data("unread", pair.second);
             }
         }
 
@@ -263,8 +263,8 @@
             });
 
             Handlebars.registerHelper("displayStatus", (message: Entities.Message) => {
-                return !message.repliedLast ? Handlebars.Utils.escapeExpression(message.text) :
-                    new Handlebars.SafeString(`<span class="${message.seenByAll ? "seenByAll" : "repliedLast"}"></span> ${Handlebars.Utils.escapeExpression(message.text)}`);
+                return new Handlebars.SafeString(`<span class="${!message.repliedLast ? "" :
+                    (message.seenByAll ? "seenByAll" : "repliedLast")}"></span> ${Handlebars.Utils.escapeExpression(message.text)}`);
             });
 
             Handlebars.registerHelper("renderPicture", (authors: Entities.Author[]) => {

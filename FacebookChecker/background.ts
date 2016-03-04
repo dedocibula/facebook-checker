@@ -136,8 +136,8 @@
         private notifyOnce(entity: Entities.FacebookEntity): void {
             if (entity.text === this.unread[entity.id])
                 return;
-            this.loader.getExternalResourceAsync(entity.picture).then(localUrl => {
-                entity.picture = localUrl;
+            this.loader.getExternalResourceAsync(entity.picture).then(localPicture => {
+                entity.picture = localPicture || this.settings.notificationIcon;
                 this.chrome.createDesktopAlert(entity instanceof Entities.Message ? entity.header : "New Notification", entity);
             });
             this.playSound();
@@ -339,7 +339,7 @@
                         this.localResources[url] = window.URL.createObjectURL(xhr.response);
                         resolve(this.localResources[url]);
                     } else {
-                        resolve(this.settings.notificationIcon);
+                        resolve(null);
                     }
                 };
                 xhr.send(null);
@@ -418,7 +418,8 @@
                 const authors: Entities.Author[] = participantIds.map(participantId => participants[participantId]);
                 const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
                 const repliedLast: boolean = message.snippet_sender === userId;
-                const text: string = authors.length === 1 || repliedLast ? message.snippet : `${authors[0].shortName}: ${message.snippet}`;
+                const text: string = this.formMessageText(message.snippet, message.snippet_has_attachment ? message.snippet_attachments[0].attach_type : null,
+                    !repliedLast && authors.length > 1, authors[0].shortName);
                 const picture: string = authors[0].profilePicture;
                 const state: Entities.State = this.parseState(message.unread_count as number);
                 const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
@@ -450,15 +451,22 @@
         private formTimestampText(text: string, timeInSeconds: number): string {
             if (text && text.length !== 0)
                 return text;
-            var minutes: number = Math.floor(timeInSeconds / 60);
+            const minutes: number = Math.floor(timeInSeconds / 60);
             return (minutes < 60) ?
                 (minutes === 0 ? "a few seconds ago" : `${minutes} minute${minutes !== 1 ? "s" : ""} ago`) :
                 `${Math.floor(minutes / 60)} hour${Math.floor(minutes / 60) !== 1 ? "s" : ""} ago`;
         }
+
+        private formMessageText(text: string, attachmentType: string, usePrefix: boolean, authorName: string): string {
+            const prefix: string = usePrefix ? `${authorName}: ` : "";
+            return (text && text.length !== 0) || !attachmentType ?
+                prefix + text :
+                prefix + `<${authorName} sent a ${attachmentType}>`;
+        }
     }
 
     window.onload = () => {
-        var settings: ISettings = {
+        const settings: ISettings = {
             baseUrl: "https://www.facebook.com",
             uriSuffix: "?__pc=EXP1%3ADEFAULT",
             refreshInterval: 20 * 1000,
