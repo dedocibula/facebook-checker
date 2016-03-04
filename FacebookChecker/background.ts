@@ -414,7 +414,8 @@
                     userId = participant.id;
             }
             return (json.threads as Array<any>).map(message => {
-                const authors: Entities.Author[] = (message.participants as Array<string>).filter(participantId => participantId !== userId).map(participantId => participants[participantId]);
+                const participantIds: string[] = (message.participants as Array<string>).filter(participantId => participantId !== userId);
+                const authors: Entities.Author[] = participantIds.map(participantId => participants[participantId]);
                 const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
                 const repliedLast: boolean = message.snippet_sender === userId;
                 const text: string = authors.length === 1 || repliedLast ? message.snippet : `${authors[0].shortName}: ${message.snippet}`;
@@ -422,8 +423,8 @@
                 const state: Entities.State = this.parseState(message.unread_count as number);
                 const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
                 const url: string = this.settings.baseUrl + prefix + message.thread_fbid;
-                const seenByAll: boolean = (json.roger[message.thread_fbid] && json.roger[message.thread_fbid][message.thread_fbid]) ?
-                    json.roger[message.thread_fbid][message.thread_fbid] - message.last_message_timestamp === 0 : false;
+                const seenByAll: boolean = json.roger[message.thread_fbid] && participantIds.map(participantId => participantId.substring(5))
+                    .every(participantId => json.roger[message.thread_fbid][participantId] && json.roger[message.thread_fbid][participantId] - message.last_message_timestamp === 0);
 
                 return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.thread_fbid, message.timestamp_relative, url, repliedLast, seenByAll);
             });
