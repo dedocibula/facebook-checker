@@ -13,8 +13,10 @@ templates['messages'] = template({"1":function(depth0,helpers,partials,data) {
     + alias3((helpers.renderPicture || (depth0 && depth0.renderPicture) || alias1).call(depth0,(depth0 != null ? depth0.authors : depth0),{"name":"renderPicture","hash":{},"data":data}))
     + "\r\n        </div>\r\n        <div class=\"col-xs-10\">\r\n            <div class=\"conversation-name\">\r\n                <div>\r\n                    <span class=\"emphasize\">"
     + alias3(((helper = (helper = helpers.header || (depth0 != null ? depth0.header : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"header","hash":{},"data":data}) : helper)))
-    + "</span>\r\n                </div>\r\n            </div>\r\n            <div class=\"conversation-text\">\r\n                "
+    + "</span>\r\n                </div>\r\n            </div>\r\n            <div class=\"conversation-text\">\r\n                <span class=\""
     + alias3((helpers.displayStatus || (depth0 && depth0.displayStatus) || alias1).call(depth0,depth0,{"name":"displayStatus","hash":{},"data":data}))
+    + "\"></span> "
+    + alias3((helpers.emojify || (depth0 && depth0.emojify) || alias1).call(depth0,depth0,{"name":"emojify","hash":{},"data":data}))
     + "\r\n            </div>\r\n            <div class=\"conversation-timestamp\">\r\n                <span>"
     + alias3(((helper = (helper = helpers.timestamp || (depth0 != null ? depth0.timestamp : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"timestamp","hash":{},"data":data}) : helper)))
     + "</span>\r\n            </div>\r\n        </div>\r\n        <div class=\"read-button-container\">\r\n            <div title=\"Read\" class=\"read-button\" data-read-info=\""

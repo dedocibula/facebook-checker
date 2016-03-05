@@ -138,12 +138,14 @@
         public header: string;
         public repliedLast: boolean;
         public seenByAll: boolean;
+        public emoticons: Range[];
 
-        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string, repliedLast: boolean, seenByAll: boolean) {
+        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string, repliedLast: boolean, seenByAll: boolean, emoticons: Range[]) {
             super(id, EntityType.Messages, text, authors, picture, state, alertId, timestamp, url);
             this.header = header;
             this.repliedLast = repliedLast;
             this.seenByAll = seenByAll;
+            this.emoticons = emoticons;
         }
     }
 }

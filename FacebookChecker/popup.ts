@@ -262,9 +262,24 @@
                 return JSON.stringify(new Entities.ReadInfo(entity.type, entity.state, entity.alertId));
             });
 
+            Handlebars.registerHelper("emojify", (message: Entities.Message) => {
+                let text: string = "", current: number = 0;
+                const original: string = Handlebars.Utils.escapeExpression(message.text), emoticons: Entities.Range[] = message.emoticons;
+                for (let i = 0; i < original.length; i++) {
+                    if (current < emoticons.length && i === emoticons[current].from) {
+                        const emoji: string = original.substring(emoticons[current].from, emoticons[current].to);
+                        text += `<span title="${emoji}" class="emoji ${Extensions.EmoticonHelper.EMOJI_CLASS_MAPPINGS[emoji]}"></span>`;
+                        i = emoticons[current].to - 1;
+                        current++;
+                    } else {
+                        text += original[i];
+                    }
+                }
+                return new Handlebars.SafeString(text);
+            });
+
             Handlebars.registerHelper("displayStatus", (message: Entities.Message) => {
-                return new Handlebars.SafeString(`<span class="${!message.repliedLast ? "" :
-                    (message.seenByAll ? "seenByAll" : "repliedLast")}"></span> ${Handlebars.Utils.escapeExpression(message.text)}`);
+                return !message.repliedLast ? "" : (message.seenByAll ? "seenByAll" : "repliedLast");
             });
 
             Handlebars.registerHelper("renderPicture", (authors: Entities.Author[]) => {

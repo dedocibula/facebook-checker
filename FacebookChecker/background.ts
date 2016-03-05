@@ -419,7 +419,8 @@
                 const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
                 const repliedLast: boolean = message.snippet_sender === userId;
                 const text: string = this.formMessageText(message.snippet, message.snippet_has_attachment ? message.snippet_attachments[0].attach_type : null,
-                    !repliedLast && authors.length > 1, authors[0].shortName);
+                    !repliedLast && authors.length > 1, !repliedLast ? authors[0].shortName : "You");
+                const emoticons: Entities.Range[] = this.locateEmoticons(text);
                 const picture: string = authors[0].profilePicture;
                 const state: Entities.State = this.parseState(message.unread_count as number);
                 const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
@@ -427,7 +428,7 @@
                 const seenByAll: boolean = json.roger[message.thread_fbid] && participantIds.map(participantId => participantId.substring(5))
                     .every(participantId => json.roger[message.thread_fbid][participantId] && json.roger[message.thread_fbid][participantId] - message.last_message_timestamp === 0);
 
-                return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.thread_fbid, message.timestamp_relative, url, repliedLast, seenByAll);
+                return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.thread_fbid, message.timestamp_relative, url, repliedLast, seenByAll, emoticons);
             });
         }
 
@@ -462,6 +463,23 @@
             return (text && text.length !== 0) || !attachmentType ?
                 prefix + text :
                 prefix + `<${authorName} sent a ${attachmentType}>`;
+        }
+
+        private locateEmoticons(text: string): Entities.Range[] {
+            const emoticons: Entities.Range[] = [];
+            if (!text || text.length === 0)
+                return emoticons;
+            for (let length = Math.min(Extensions.EmoticonHelper.MAX_KEY_LENGTH, text.length); length >= Extensions.EmoticonHelper.MIN_KEY_LENGTH; length--) {
+                for (let position = 0; position <= text.length - length; position++) {
+                    if (Extensions.EmoticonHelper.EMOJI_CLASS_MAPPINGS.hasOwnProperty(text.substr(position, length)) &&
+                        (position - 1 < 0 || text[position - 1] === " ") && (position + length >= text.length || text[position + length] === " ")) {
+                        emoticons.push(new Entities.Range(position, position + length));
+                        position += length - 1;
+                    }
+                }
+            }
+            emoticons.sort((first, second) => first.from - second.from);
+            return emoticons;
         }
     }
 

@@ -9,7 +9,7 @@
         "default_popup": "popup.html"
     },
     "background": {
-        "scripts": [ "Scripts/jquery-2.2.0.min.js", "entities.js", "background.js" ]
+        "scripts": [ "Scripts/jquery-2.2.0.min.js", "entities.js", "extensions.js", "background.js" ]
     },
     "permissions": [ "http://*.facebook.com/*", "https://*.facebook.com/*", "webRequest", "webRequestBlocking", "notifications" ],
     "icons": {
