@@ -123,6 +123,7 @@
                     action(info).then((result: T) => {
                         resolve(mapper(result));
                     }, (error: any) => {
+                        this.info = null;
                         console.error(`Date: ${new Date()}, ${error.stack}`);
                         resolve(new Entities.Response(Entities.ResponseStatus[error.message as string]));
                     });
