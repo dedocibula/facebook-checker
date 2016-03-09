@@ -9,6 +9,7 @@ Provided features:
 * Desktop alerts
 * Support for Mark as Read
 * Recipient read status
+* Graphic emoji
 
 ### Installation:
 
