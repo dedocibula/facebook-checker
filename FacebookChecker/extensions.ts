@@ -3,23 +3,10 @@
      * Values obtained from https://www.piliapp.com/facebook-symbols/
      */
     export class EmoticonHelper {
-        private static minKeyLength: number;
-        public static get MIN_KEY_LENGTH(): number {
-            this.minKeyLength = this.minKeyLength || Math.min.apply(Math, Object.keys(this.EMOJI_CLASS_MAPPINGS).map(key => key.length));
+        private static emojiClassSimpleMappings: { [emoji: string]: string };
 
-            return this.minKeyLength;
-        }
-
-        private static maxKeyLength: number;
-        public static get MAX_KEY_LENGTH(): number {
-            this.maxKeyLength = this.maxKeyLength || Math.max.apply(Math, Object.keys(this.EMOJI_CLASS_MAPPINGS).map(key => key.length));
-
-            return this.maxKeyLength;
-        }
-
-        private static emojiClassMappings: { [emoji: string]: string };
-        public static get EMOJI_CLASS_MAPPINGS(): { [emoji: string]: string } {
-            this.emojiClassMappings = this.emojiClassMappings || {
+        private static get EMOJI_CLASS_SIMPLE_MAPPINGS(): { [emoji: string]: string } {
+            this.emojiClassSimpleMappings = this.emojiClassSimpleMappings || {
                 "3:)": "emojidevil",
                 "8-)": "emojiglasses",
                 "(^^^)": "emojishark",
@@ -49,7 +36,16 @@
                 "O.o": "emojiconfused_rev",
                 "O:)": "emojiangel",
                 "^_^": "emojikiki",
-                "o.O": "emojiconfused",
+                "o.O": "emojiconfused"
+            };
+
+            return this.emojiClassSimpleMappings;
+        }
+
+        private static emojiClassComplexMappings: { [emoji: string]: string };
+
+        private static get EMOJI_CLASS_COMPLEX_MAPPINGS(): { [emoji: string]: string } {
+            this.emojiClassComplexMappings = this.emojiClassComplexMappings || {
                 "↖": "emoji2196",
                 "↗": "emoji2197",
                 "↘": "emoji2198",
@@ -501,7 +497,108 @@
                 "🛀": "emoji1f6c0"
             };
 
-            return this.emojiClassMappings;
+            return this.emojiClassComplexMappings;
         }
+
+        private static simpleTrie: Trie<string>;
+        private static get SIMPLE_TRIE(): Trie<string> {
+            if (!this.simpleTrie) {
+                this.simpleTrie = new Trie<string>();
+                for (let prop in this.EMOJI_CLASS_SIMPLE_MAPPINGS) {
+                    if (this.EMOJI_CLASS_SIMPLE_MAPPINGS.hasOwnProperty(prop))
+                        this.simpleTrie.insertWord(prop, this.EMOJI_CLASS_SIMPLE_MAPPINGS[prop]);
+                }
+            }
+
+            return this.simpleTrie;
+        }
+
+        private static complexTrie: Trie<string>;
+        private static get COMPLEX_TRIE(): Trie<string> {
+            if (!this.complexTrie) {
+                this.complexTrie = new Trie<string>();
+                for (let prop in this.EMOJI_CLASS_COMPLEX_MAPPINGS) {
+                    if (this.EMOJI_CLASS_COMPLEX_MAPPINGS.hasOwnProperty(prop))
+                        this.complexTrie.insertWord(prop, this.EMOJI_CLASS_COMPLEX_MAPPINGS[prop]);
+                }
+            }
+
+            return this.complexTrie;
+        }
+
+        public static identifyEmoticons(text: string): Entities.Pair<Entities.Range, string>[] {
+            const emoticons: Entities.Pair<Entities.Range, string>[] = [];
+            if (!text || text.length === 0)
+                return emoticons;
+
+            let currentTrie: Trie<string> = this.COMPLEX_TRIE;
+            for (let i = 0; i < text.length; i++) {
+                if (currentTrie.getNextTrie(text[i])) {
+                    let j = i;
+                    while (j < Math.min(i + this.COMPLEX_TRIE.maxWordLength, text.length) && (currentTrie && !currentTrie.associatedValue))
+                        currentTrie = currentTrie.getNextTrie(text[j++]);
+                    if (currentTrie && currentTrie.associatedValue)
+                        emoticons.push(new Entities.Pair(new Entities.Range(i, j), currentTrie.associatedValue));
+                    currentTrie = this.COMPLEX_TRIE;
+                    i = j - 1;
+                }
+            }
+            currentTrie = this.SIMPLE_TRIE;
+            let currentIndex: number = 0, possibleStart: boolean = true;
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                if (!possibleStart || !currentTrie.getNextTrie(char)) {
+                    possibleStart = char === " " || char === "\t" || char === "\n" || (currentIndex < emoticons.length && emoticons[currentIndex].first.from === i);
+                    i = currentIndex < emoticons.length && emoticons[currentIndex].first.from === i ? emoticons[currentIndex++].first.to - 1 : i;
+                } else {
+                    let j = i;
+                    while (j < Math.min(i + this.SIMPLE_TRIE.maxWordLength, text.length) && (currentTrie && !currentTrie.associatedValue))
+                        currentTrie = currentTrie.getNextTrie(text[j++]);
+                    if (currentTrie && currentTrie.associatedValue && (j === text.length || text[j] === " " || text[j] === "\t" || text[j] === "\n" || (currentIndex < emoticons.length && emoticons[currentIndex].first.from === j)))
+                        emoticons.push(new Entities.Pair(new Entities.Range(i, j), currentTrie.associatedValue));
+                    currentTrie = this.SIMPLE_TRIE;
+                    i = j - 1;
+                    possibleStart = false;
+                }
+            }
+
+            emoticons.sort((first, second) => first.first.from - second.first.from);
+            return emoticons;
+        }
+    }
+
+    export class Trie<T> {
+        private leafs: { [prefix: string]: Trie<T> };
+
+        private value: T;
+        private maxLength: number;
+
+        constructor() {
+            this.leafs = {};
+
+            this.maxLength = Number.MIN_VALUE;
+        }
+
+        public insertWord(word: string, value: T): void {
+            let current: Trie<T> = this, next: Trie<T>;
+            for (let i = 0; i < word.length; i++) {
+                next = current.leafs[word[i]];
+                if (!next) {
+                    next = new Trie<T>();
+                    current.leafs[word[i]] = next;
+                }
+                current = next;
+            }
+            current.value = value;
+            this.maxLength = Math.max(this.maxLength, word.length);
+        }
+
+        public getNextTrie(prefix: string): Trie<T> {
+            return this.leafs[prefix];
+        }
+
+        public get associatedValue(): T { return this.value; }
+
+        public get maxWordLength(): number { return this.maxLength; }
     }
 }

@@ -11,7 +11,7 @@
     "background": {
         "scripts": [ "Scripts/jquery-2.2.0.min.js", "entities.js", "extensions.js", "background.js" ]
     },
-    "permissions": [ "http://*.facebook.com/*", "https://*.facebook.com/*", "webRequest", "webRequestBlocking", "notifications" ],
+    "permissions": [ "http://*.facebook.com/*", "https://*.facebook.com/*", "webRequest", "webRequestBlocking", "notifications", "tabs" ],
     "icons": {
         "128": "Images/icon128.png",
         "16": "Images/icon16.png",

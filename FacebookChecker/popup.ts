@@ -264,12 +264,12 @@
 
             Handlebars.registerHelper("emojify", (message: Entities.Message) => {
                 let text: string = "", current: number = 0;
-                const original: string = Handlebars.Utils.escapeExpression(message.text), emoticons: Entities.Range[] = message.emoticons;
+                const original: string = Handlebars.Utils.escapeExpression(message.text), emoticons: Entities.Pair<Entities.Range, string>[] = message.emoticons;
                 for (let i = 0; i < original.length; i++) {
-                    if (current < emoticons.length && i === emoticons[current].from) {
-                        const emoji: string = original.substring(emoticons[current].from, emoticons[current].to);
-                        text += `<span title="${emoji}" class="emoji ${Extensions.EmoticonHelper.EMOJI_CLASS_MAPPINGS[emoji]}"></span>`;
-                        i = emoticons[current].to - 1;
+                    if (current < emoticons.length && i === emoticons[current].first.from) {
+                        const emoji: string = original.substring(emoticons[current].first.from, emoticons[current].first.to);
+                        text += `<span title="${emoji}" class="emoji ${emoticons[current].second}"></span>`;
+                        i = emoticons[current].first.to - 1;
                         current++;
                     } else {
                         text += original[i];
