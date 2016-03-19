@@ -264,7 +264,7 @@
 
             Handlebars.registerHelper("emojify", (message: Entities.Message) => {
                 let text: string = "", current: number = 0;
-                const original: string = Handlebars.Utils.escapeExpression(message.text), emoticons: Extensions.Pair<Extensions.Range, string>[] = message.emoticons;
+                const original: string = message.text, emoticons: Extensions.Pair<Extensions.Range, string>[] = message.emoticons;
                 for (let i = 0; i < original.length; i++) {
                     if (current < emoticons.length && i === emoticons[current].first.from) {
                         const emoji: string = original.substring(emoticons[current].first.from, emoticons[current].first.to);
@@ -272,7 +272,7 @@
                         i = emoticons[current].first.to - 1;
                         current++;
                     } else {
-                        text += original[i];
+                        text += Handlebars.Utils.escapeExpression(original[i]);
                     }
                 }
                 return new Handlebars.SafeString(text);
