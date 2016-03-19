@@ -1,4 +1,4 @@
-﻿module Facebook.Extensions {
+﻿namespace Facebook.Extensions {
     /**
      * Values obtained from https://www.piliapp.com/facebook-symbols/
      */
