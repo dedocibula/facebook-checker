@@ -520,8 +520,8 @@
             return this.complexTrie;
         }
 
-        public static identifyEmoticons(text: string): Entities.Pair<Entities.Range, string>[] {
-            const emoticons: Entities.Pair<Entities.Range, string>[] = [];
+        public static identifyEmoticons(text: string): Pair<Range, string>[] {
+            const emoticons: Pair<Range, string>[] = [];
             if (!text || text.length === 0)
                 return emoticons;
 
@@ -552,13 +552,33 @@
             return emoticons;
         }
 
-        private static checkFrom(text: string, from: number, currentTrie: Trie<string>, maxTo: number, results: Entities.Pair<Entities.Range, string>[], validEnding?: (string, number) => boolean): number {
+        private static checkFrom(text: string, from: number, currentTrie: Trie<string>, maxTo: number, results: Pair<Range, string>[], validEnding?: (string, number) => boolean): number {
             let to: number = from;
             while (to < Math.min(from + maxTo, text.length) && (currentTrie && !currentTrie.associatedValue))
                 currentTrie = currentTrie.getNextTrie(text[to++]);
             if (currentTrie && currentTrie.associatedValue && (!validEnding || validEnding(text, to)))
-                results.push(new Entities.Pair(new Entities.Range(from, to), currentTrie.associatedValue));
+                results.push(new Pair(new Range(from, to), currentTrie.associatedValue));
             return to - 1;
+        }
+    }
+
+    export class Range {
+        public from: number;
+        public to: number;
+
+        constructor(from: number, to: number) {
+            this.from = from;
+            this.to = to;
+        }
+    }
+
+    export class Pair<T1, T2> {
+        public first: T1;
+        public second: T2;
+
+        constructor(first: T1, second: T2) {
+            this.first = first;
+            this.second = second;
         }
     }
 

@@ -134,8 +134,8 @@
 
         private updateHeaders(response: Entities.Response): void {
             this.renderer.updateUnreadCounts(
-                new Entities.Pair(Entities.EntityType[Entities.EntityType.Notifications], response.newNotifications),
-                new Entities.Pair(Entities.EntityType[Entities.EntityType.Messages], response.newMessages)
+                new Extensions.Pair(Entities.EntityType[Entities.EntityType.Notifications], response.newNotifications),
+                new Extensions.Pair(Entities.EntityType[Entities.EntityType.Messages], response.newMessages)
             );
         }
     }
@@ -191,10 +191,10 @@
         public updateUnreadState(entityType: Entities.EntityType, button: HTMLElement): void {
             $(button).closest("a").removeClass("new-list-item");
             const entityString: string = Entities.EntityType[entityType];
-            this.updateUnreadCounts(new Entities.Pair(entityString, this.$navigationMappings[entityString].data("unread") as number - 1));
+            this.updateUnreadCounts(new Extensions.Pair(entityString, this.$navigationMappings[entityString].data("unread") as number - 1));
         }
 
-        public updateUnreadCounts(...counts: Entities.Pair<string, number>[]): void {
+        public updateUnreadCounts(...counts: Extensions.Pair<string, number>[]): void {
             for (let pair of counts) {
                 const $link: JQuery = this.$navigationMappings[pair.first].find("a");
                 const original = $link.html().split(" (")[0];
@@ -243,7 +243,7 @@
 
             Handlebars.registerHelper("emphasize", (notification: Entities.Notification) => {
                 let text: string = "", current: number = 0;
-                const original: string = notification.text, emphases: Entities.Range[] = notification.emphases;
+                const original: string = notification.text, emphases: Extensions.Range[] = notification.emphases;
                 for (let i = 0; i < original.length; i++) {
                     if (current < emphases.length) {
                         if (i === emphases[current].from) {
@@ -264,7 +264,7 @@
 
             Handlebars.registerHelper("emojify", (message: Entities.Message) => {
                 let text: string = "", current: number = 0;
-                const original: string = Handlebars.Utils.escapeExpression(message.text), emoticons: Entities.Pair<Entities.Range, string>[] = message.emoticons;
+                const original: string = Handlebars.Utils.escapeExpression(message.text), emoticons: Extensions.Pair<Extensions.Range, string>[] = message.emoticons;
                 for (let i = 0; i < original.length; i++) {
                     if (current < emoticons.length && i === emoticons[current].first.from) {
                         const emoji: string = original.substring(emoticons[current].first.from, emoticons[current].first.to);

@@ -53,26 +53,6 @@
         Messages
     }
 
-    export class Range {
-        public from: number;
-        public to: number;
-
-        constructor(from: number, to: number) {
-            this.from = from;
-            this.to = to;
-        }
-    }
-
-    export class Pair<T1, T2> {
-        public first: T1;
-        public second: T2;
-
-        constructor(first: T1, second: T2) {
-            this.first = first;
-            this.second = second;
-        }
-    }
-
     export class ReadInfo {
         public entityType: EntityType;
         public state: State;
@@ -122,11 +102,11 @@
     }
 
     export class Notification extends FacebookEntity {
-        public emphases: Range[];
+        public emphases: Extensions.Range[];
         public icon: string;
         public attachment: string;
 
-        constructor(id: string, text: string, emphases: Range[], authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string, icon: string, attachment?: string) {
+        constructor(id: string, text: string, emphases: Extensions.Range[], authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string, icon: string, attachment?: string) {
             super(id, EntityType.Notifications, text, authors, picture, state, alertId, timestamp, url);
             this.emphases = emphases;
             this.icon = icon;
@@ -138,9 +118,9 @@
         public header: string;
         public repliedLast: boolean;
         public seenByAll: boolean;
-        public emoticons: Pair<Range, string>[];
+        public emoticons: Extensions.Pair<Extensions.Range, string>[];
 
-        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string, repliedLast: boolean, seenByAll: boolean, emoticons: Pair<Range, string>[]) {
+        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string, repliedLast: boolean, seenByAll: boolean, emoticons: Extensions.Pair<Extensions.Range, string>[]) {
             super(id, EntityType.Messages, text, authors, picture, state, alertId, timestamp, url);
             this.header = header;
             this.repliedLast = repliedLast;
