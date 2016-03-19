@@ -504,10 +504,7 @@
         private static get SIMPLE_TRIE(): Trie<string> {
             if (!this.simpleTrie) {
                 this.simpleTrie = new Trie<string>();
-                for (let prop in this.EMOJI_CLASS_SIMPLE_MAPPINGS) {
-                    if (this.EMOJI_CLASS_SIMPLE_MAPPINGS.hasOwnProperty(prop))
-                        this.simpleTrie.insertWord(prop, this.EMOJI_CLASS_SIMPLE_MAPPINGS[prop]);
-                }
+                $.map(this.EMOJI_CLASS_SIMPLE_MAPPINGS, (value, key) => this.simpleTrie.insertWord(key, value));
             }
 
             return this.simpleTrie;
@@ -517,10 +514,7 @@
         private static get COMPLEX_TRIE(): Trie<string> {
             if (!this.complexTrie) {
                 this.complexTrie = new Trie<string>();
-                for (let prop in this.EMOJI_CLASS_COMPLEX_MAPPINGS) {
-                    if (this.EMOJI_CLASS_COMPLEX_MAPPINGS.hasOwnProperty(prop))
-                        this.complexTrie.insertWord(prop, this.EMOJI_CLASS_COMPLEX_MAPPINGS[prop]);
-                }
+                $.map(this.EMOJI_CLASS_COMPLEX_MAPPINGS, (value, key) => this.complexTrie.insertWord(key, value));
             }
 
             return this.complexTrie;
@@ -534,36 +528,37 @@
             let currentTrie: Trie<string> = this.COMPLEX_TRIE;
             for (let i = 0; i < text.length; i++) {
                 if (currentTrie.getNextTrie(text[i])) {
-                    let j = i;
-                    while (j < Math.min(i + this.COMPLEX_TRIE.maxWordLength, text.length) && (currentTrie && !currentTrie.associatedValue))
-                        currentTrie = currentTrie.getNextTrie(text[j++]);
-                    if (currentTrie && currentTrie.associatedValue)
-                        emoticons.push(new Entities.Pair(new Entities.Range(i, j), currentTrie.associatedValue));
+                    i = this.checkFrom(text, i, currentTrie, this.COMPLEX_TRIE.maxWordLength, emoticons);
                     currentTrie = this.COMPLEX_TRIE;
-                    i = j - 1;
                 }
             }
             currentTrie = this.SIMPLE_TRIE;
             let currentIndex: number = 0, possibleStart: boolean = true;
+            const validVicinity: (string, number) => boolean = (fullText, index) => index < 0 || index === fullText.length ||
+                fullText[index] === " " || fullText[index] === "\t" || fullText[index] === "\n" ||
+                (currentIndex < emoticons.length && emoticons[currentIndex].first.from === index);
             for (let i = 0; i < text.length; i++) {
-                let char = text[i];
-                if (!possibleStart || !currentTrie.getNextTrie(char)) {
-                    possibleStart = char === " " || char === "\t" || char === "\n" || (currentIndex < emoticons.length && emoticons[currentIndex].first.from === i);
+                if (!possibleStart || !currentTrie.getNextTrie(text[i])) {
+                    possibleStart = validVicinity(text, i);
                     i = currentIndex < emoticons.length && emoticons[currentIndex].first.from === i ? emoticons[currentIndex++].first.to - 1 : i;
                 } else {
-                    let j = i;
-                    while (j < Math.min(i + this.SIMPLE_TRIE.maxWordLength, text.length) && (currentTrie && !currentTrie.associatedValue))
-                        currentTrie = currentTrie.getNextTrie(text[j++]);
-                    if (currentTrie && currentTrie.associatedValue && (j === text.length || text[j] === " " || text[j] === "\t" || text[j] === "\n" || (currentIndex < emoticons.length && emoticons[currentIndex].first.from === j)))
-                        emoticons.push(new Entities.Pair(new Entities.Range(i, j), currentTrie.associatedValue));
+                    i = this.checkFrom(text, i, currentTrie, this.SIMPLE_TRIE.maxWordLength, emoticons, validVicinity);
                     currentTrie = this.SIMPLE_TRIE;
-                    i = j - 1;
                     possibleStart = false;
                 }
             }
 
-            emoticons.sort((first, second) => first.first.from - second.first.from);
+            emoticons.sort((firstEmoji, secondEmoji) => firstEmoji.first.from - secondEmoji.first.from);
             return emoticons;
+        }
+
+        private static checkFrom(text: string, from: number, currentTrie: Trie<string>, maxTo: number, results: Entities.Pair<Entities.Range, string>[], validEnding?: (string, number) => boolean): number {
+            let to: number = from;
+            while (to < Math.min(from + maxTo, text.length) && (currentTrie && !currentTrie.associatedValue))
+                currentTrie = currentTrie.getNextTrie(text[to++]);
+            if (currentTrie && currentTrie.associatedValue && (!validEnding || validEnding(text, to)))
+                results.push(new Entities.Pair(new Entities.Range(from, to), currentTrie.associatedValue));
+            return to - 1;
         }
     }
 
