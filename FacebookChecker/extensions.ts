@@ -19,6 +19,8 @@
                 ":*": "emojikiss",
                 ":/": "emojiunsure",
                 ":P": "emojitongue",
+                ":p": "emojitongue",
+                ":O": "emojigasp",
                 ":o": "emojigasp",
                 ":poop:": "emojipoop",
                 ":putnam:": "emojiputnam",
