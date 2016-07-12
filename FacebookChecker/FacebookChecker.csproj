@@ -39,6 +39,7 @@
     <Content Include="Images\icon32.png" />
     <Content Include="Images\icon48.png" />
     <Content Include="Images\indicator_white_large.gif" />
+    <Content Include="Images\message-icons.png" />
     <Content Include="Images\read-buttons.png" />
     <Content Include="packages.config" />
     <Content Include="fonts\glyphicons-halflings-regular.woff2" />
