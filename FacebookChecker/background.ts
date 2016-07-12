@@ -463,7 +463,7 @@
                 const state: Entities.State = this.parseState($friendRequest.hasClass("jewelItemNew"));
                 const url: string = links[0].href;
                 const mutualFriendText: string = links[1].innerText;
-                const mutualFriendTooltip: string = links[1].dataset.tooltipUri;
+                const mutualFriendTooltip: string = links[1].dataset["tooltipUri"];
 
                 return new Entities.FriendRequest(id, requestor.fullName, requestor, picture, state, url, mutualFriendText, mutualFriendTooltip);
             }).toArray() as Entities.FriendRequest[];
