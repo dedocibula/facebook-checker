@@ -82,13 +82,15 @@
         private reloadAll(): Promise<Entities.Response> {
             return this.try((info: Entities.FacebookInfo) => Promise.all<Entities.FacebookEntity[]>([
                 this.loader.getNotificationsAsync(info.token),
-                this.loader.getMessagesAsync(info.token, info.profileUrl)
+                this.loader.getMessagesAsync(info.token, info.profileUrl),
+                this.loader.getFriendRequestsAsync(info.token)
             ]), (entities: Entities.FacebookEntity[][]) => {
                 const newNotifications: number = entities[0].filter(entity => entity.state !== Entities.State.Read).length;
                 const newMessages: number = entities[1].filter(entity => entity.state !== Entities.State.Read).length;
+                const newFriendRequests: number = entities[2].filter(entity => entity.state !== Entities.State.Read).length;
 
-                return new Entities.Response(Entities.ResponseStatus.Ok, newNotifications, newMessages,
-                    (entities[0] as Entities.Notification[]), (entities[1] as Entities.Message[]));
+                return new Entities.Response(Entities.ResponseStatus.Ok, newNotifications, newMessages, newFriendRequests,
+                    (entities[0] as Entities.Notification[]), (entities[1] as Entities.Message[]), (entities[2] as Entities.FriendRequest[]));
             });
         }
 
@@ -97,23 +99,11 @@
             if (response.status !== Entities.ResponseStatus.Ok)
                 return;
 
-            for (let entity of response.messages) {
-                if (entity.state === Entities.State.Unread &&
-                    !entity.repliedLast)
-                    this.notifyOnce(entity);
-                else
-                    delete this.unread[entity.id];
-            }
+            this.checkNew(response.messages, message => message.state === Entities.State.Unread && !message.repliedLast);
+            this.checkNew(response.notifications, notification => notification.state === Entities.State.Unseen || notification.state === Entities.State.Unread);
+            this.checkNew(response.friendRequests, friendRequest => friendRequest.state === Entities.State.Unread);
 
-            for (let entity of response.notifications) {
-                if (entity.state === Entities.State.Unseen ||
-                    entity.state === Entities.State.Unread)
-                    this.notifyOnce(entity);
-                else
-                    delete this.unread[entity.id];
-            }
-
-            this.chrome.updateUnreadCounter(response.newMessages + response.newNotifications);
+            this.chrome.updateUnreadCounter(response.newMessages + response.newNotifications + response.newFriendRequests);
         }
 
         private try<T>(action: (info: Entities.FacebookInfo) => Promise<T>, mapper: (result: T) => Entities.Response): Promise<Entities.Response> {
@@ -134,15 +124,24 @@
             });
         }
 
-        private notifyOnce(entity: Entities.FacebookEntity): void {
-            if (entity.text === this.unread[entity.id])
+        private checkNew<T extends Entities.FacebookEntity>(entities: T[], isNewPredicate: (entity: T) => boolean): void {
+            for (let entity of entities) {
+                if (isNewPredicate(entity))
+                    this.notifyOnce(entity);
+                else
+                    delete this.unread[entity.id];
+            }
+        }
+
+        private notifyOnce(notifiableEntity: Api.INotifiable): void {
+            if (notifiableEntity.getText() === this.unread[notifiableEntity.getId()])
                 return;
-            this.loader.getExternalResourceAsync(entity.picture).then(localPicture => {
-                entity.picture = localPicture || this.settings.notificationIcon;
-                this.chrome.createDesktopAlert(entity instanceof Entities.Message ? entity.header : "New Notification", entity);
+            this.loader.getExternalResourceAsync(notifiableEntity.picture).then(localPicture => {
+                notifiableEntity.picture = localPicture || this.settings.notificationIcon;
+                this.chrome.createDesktopAlert(notifiableEntity);
             });
             this.playSound();
-            this.unread[entity.id] = entity.text;
+            this.unread[notifiableEntity.getId()] = notifiableEntity.getText();
         }
 
         private playSound(): void {
@@ -167,14 +166,14 @@
             this.notifications = {};
         }
 
-        public createDesktopAlert<T extends Entities.FacebookEntity>(title: string, entity: T): void {
+        public createDesktopAlert(notifiableEntity: Api.INotifiable): void {
             if (chrome && chrome.notifications) {
-                chrome.notifications.create(entity.id, {
+                chrome.notifications.create(notifiableEntity.getId(), {
                     type: "basic",
-                    title: title,
-                    message: entity.text,
+                    title: notifiableEntity.getTitle(),
+                    message: notifiableEntity.getText(),
                     contextMessage: this.settings.contextMessage,
-                    iconUrl: entity.picture
+                    iconUrl: notifiableEntity.picture
                 }, (id) => {
                     setTimeout(() => {
                         chrome.notifications.clear(id, () => { });
@@ -182,7 +181,7 @@
                     }, this.settings.notificationFadeoutDelay);
                 });
 
-                this.notifications[entity.id] = entity.url;
+                this.notifications[notifiableEntity.getId()] = notifiableEntity.getUrl();
             }
         }
 
@@ -257,6 +256,7 @@
     class Loader implements Api.ILoader {
         private static get NOTIFICATION_URI(): string { return "/ajax/notifications/client/get.php"; }
         private static get MESSAGE_URI(): string { return "/ajax/mercury/threadlist_info.php"; }
+        private static get FRIEND_REQUEST_URI(): string { return "/ajax/requests/loader"; }
 
         private static get MARK_NOTIFICATION_READ_URI(): string { return "/ajax/notifications/mark_read.php"; }
         private static get MARK_MESSAGE_READ_URI(): string { return "/ajax/mercury/change_read_status.php"; }
@@ -320,6 +320,27 @@
                     const response = JSON.parse((result).match(/{.*}/)[0]);
                     if (!response.error)
                         resolve(this.parseMessages(response.payload, profileUrl));
+                    else
+                        reject(new Error(Entities.ResponseStatus[response.error === 1357001 ?
+                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken]));
+                }).fail(() => {
+                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                });
+            });
+        }
+
+        public getFriendRequestsAsync(token: string): Promise<Entities.FriendRequest[]> {
+            return new Promise<Entities.FriendRequest[]>((resolve, reject) => {
+                $.ajax({
+                    url: this.settings.baseUrl + Loader.FRIEND_REQUEST_URI,
+                    method: "POST",
+                    accepts: "*/*",
+                    dataType: "text",
+                    data: { __a: 1, fb_dtsg: token }
+                }).done((result: string) => {
+                    const response = JSON.parse((result).match(/{.*}/)[0]);
+                    if (!response.error && response.domops && response.domops[0] && response.domops[0][3] && response.domops[0][3].__html)
+                        resolve(this.parseFriendRequests(response.domops[0][3].__html));
                     else
                         reject(new Error(Entities.ResponseStatus[response.error === 1357001 ?
                             Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken]));
@@ -432,9 +453,25 @@
             });
         }
 
-        private parseState(state: number | string): Entities.State {
-            if (typeof state === "number") {
-                return state === 0 ? Entities.State.Read : Entities.State.Unread;
+        private parseFriendRequests(html: string): Entities.FriendRequest[] {
+            return $(html).find(".fbRequestList:first .objectListItem").map((_, friendRequest: HTMLLIElement) => {
+                const $friendRequest: JQuery = $(friendRequest);
+                const id: string = $friendRequest.find("form input[name='request_id']").val();
+                const picture: string = $friendRequest.find("img:first").attr("src");
+                const links: HTMLLinkElement[] = $friendRequest.find(".requestStatusBlock span a").toArray();
+                const requestor: Entities.Author = new Entities.Author(links[0].innerText, picture, links[0].innerText.split(" ")[0]);
+                const state: Entities.State = this.parseState($friendRequest.hasClass("jewelItemNew"));
+                const url: string = links[0].href;
+                const mutualFriendText: string = links[1].innerText;
+                const mutualFriendTooltip: string = links[1].dataset.tooltipUri;
+
+                return new Entities.FriendRequest(id, requestor.fullName, requestor, picture, state, url, mutualFriendText, mutualFriendTooltip);
+            }).toArray() as Entities.FriendRequest[];
+        }
+
+        private parseState(state: boolean | number | string): Entities.State {
+            if (typeof state === "number" || typeof state === "boolean") {
+                return !state ? Entities.State.Read : Entities.State.Unread;
             } else {
                 switch (state) {
                     case "UNSEEN_AND_UNREAD":

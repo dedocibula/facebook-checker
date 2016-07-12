@@ -13,15 +13,19 @@
         public status: ResponseStatus;
         public newNotifications: number;
         public newMessages: number;
+        public newFriendRequests: number;
         public notifications: Notification[];
         public messages: Message[];
+        public friendRequests: FriendRequest[];
 
-        constructor(type: ResponseStatus, newNotifications?: number, newMessages?: number, notifications?: Notification[], messages?: Message[]) {
+        constructor(type: ResponseStatus, newNotifications?: number, newMessages?: number, newFriendRequests?: number, notifications?: Notification[], messages?: Message[], friendRequests?: FriendRequest[]) {
             this.status = type;
             this.newNotifications = newNotifications;
             this.newMessages = newMessages;
+            this.newFriendRequests = newFriendRequests;
             this.notifications = notifications;
             this.messages = messages;
+            this.friendRequests = friendRequests;
         }
     }
 
@@ -95,7 +99,7 @@
             this.picture = picture;
         }
 
-        public getId(): string { return this.id; }
+        public abstract getId(): string;
 
         public abstract getTitle(): string;
 
@@ -129,6 +133,8 @@
             this.attachment = attachment;
         }
 
+        public getId(): string { return `notif_${this.id}`; }
+
         public getTitle(): string { return "New Notification"; }
     }
 
@@ -146,6 +152,8 @@
             this.emoticons = emoticons;
         }
 
+        public getId(): string { return `mes_${this.id}`; }
+
         public getTitle(): string { return this.header; }
     }
 
@@ -160,6 +168,8 @@
             this.mutualFriendText = mutualFriendText;
             this.mutualFriendTooltip = mutualFriendTooltip;
         }
+
+        public getId(): string { return `fr_${this.id}`; }
 
         public getTitle(): string { return "New Friend Request"; }
     }

@@ -258,8 +258,8 @@
                 return new Handlebars.SafeString(text);
             });
 
-            Handlebars.registerHelper("serializeReadInfo", (entity: Entities.FacebookEntity) => {
-                return JSON.stringify(new Entities.ReadInfo(entity.type, entity.state, entity.alertId));
+            Handlebars.registerHelper("serializeReadInfo", (readableEntity: Entities.InformativeEntity) => {
+                return JSON.stringify(new Entities.ReadInfo(readableEntity.type, readableEntity.state, readableEntity.alertId));
             });
 
             Handlebars.registerHelper("emojify", (message: Entities.Message) => {
