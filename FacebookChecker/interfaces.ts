@@ -6,6 +6,8 @@
 
         getMessagesAsync(token: string, profileUrl: string): Promise<Entities.Message[]>;
 
+        getFriendRequestsAsync(token: string): Promise<Entities.FriendRequest[]>;
+
         getExternalResourceAsync(url: string): Promise<string>;
 
         markNotificationRead(token: string, id: string): Promise<void>;
@@ -19,5 +21,17 @@
         openLink(url: string): void;
 
         markRead(readInfo: Entities.ReadInfo, onReady?: (response: Entities.Response) => void): void;
+    }
+
+    export interface INotifiable {
+        getId(): string;
+
+        getTitle(): string;
+
+        getText(): string;
+
+        getUrl(): string;
+
+        picture: string;
     }
 }
