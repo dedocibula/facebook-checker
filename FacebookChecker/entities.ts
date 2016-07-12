@@ -110,7 +110,7 @@
         public alertId: string;
 
         constructor(id: string, authors: Author[], type: EntityType, text: string, state: State, url: string, picture: string, timestamp: string, alertId: string) {
-            super(id, EntityType.Notifications, text, state, url, picture);
+            super(id, type, text, state, url, picture);
             this.authors = authors;
             this.timestamp = timestamp;
             this.alertId = alertId;
