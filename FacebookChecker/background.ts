@@ -458,12 +458,12 @@
                 const $friendRequest: JQuery = $(friendRequest);
                 const id: string = $friendRequest.find("form input[name='request_id']").val();
                 const picture: string = $friendRequest.find("img:first").attr("src");
-                const links: HTMLLinkElement[] = $friendRequest.find(".requestStatusBlock span a").toArray();
+                const links: HTMLAnchorElement[] = $friendRequest.find(".requestStatusBlock span a").toArray();
                 const requestor: Entities.Author = new Entities.Author(links[0].innerText, picture, links[0].innerText.split(" ")[0]);
                 const state: Entities.State = this.parseState($friendRequest.hasClass("jewelItemNew"));
                 const url: string = links[0].href;
-                const mutualFriendText: string = links[1].innerText;
-                const mutualFriendTooltip: string = links[1].dataset["tooltipUri"];
+                const mutualFriendText: string = links[1].parentElement.innerText;
+                const mutualFriendTooltip: string = this.settings.baseUrl + links[1].pathname + links[1].search;
 
                 return new Entities.FriendRequest(id, requestor.fullName, requestor, picture, state, url, mutualFriendText, mutualFriendTooltip);
             }).toArray() as Entities.FriendRequest[];

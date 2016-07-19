@@ -65,12 +65,13 @@
     <Content Include="Scripts\handlebars.runtime.js" />
     <Content Include="Scripts\handlebars.runtime.min.js" />
     <Content Include="chime.ogg" />
-    <None Include="Scripts\jquery-2.2.3.intellisense.js" />
+    <Content Include="Scripts\jquery-2.2.3.intellisense.js" />
     <Content Include="Scripts\jquery-2.2.3.js" />
     <Content Include="Scripts\jquery-2.2.3.min.js" />
     <Content Include="Scripts\jquery-2.2.3.min.map" />
-    <None Include="Templates\notifications.handlebars" />
-    <None Include="Templates\messages.handlebars" />
+    <Content Include="Templates\friendRequests.handlebars" />
+    <Content Include="Templates\notifications.handlebars" />
+    <Content Include="Templates\messages.handlebars" />
     <Content Include="Scripts\templates.js" />
     <Content Include="web.config" />
   </ItemGroup>

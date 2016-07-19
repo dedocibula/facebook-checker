@@ -18,9 +18,9 @@ a {
         text-decoration: none;
     }
 
-    a.list-group-item {
-        padding: 10px 0;
-    }
+.list-group-item {
+    padding: 10px 0;
+}
 
 hr {
     border-color: #dedede;
@@ -206,8 +206,28 @@ h1, h2, h3 {
 
 .btn-primary, .label-primary, .list-group-item.active, .list-group-item.active:hover, .list-group-item.active:focus {
     background-color: #3B5999;
+    border-color: #365899;
     color: #fffffe;
 }
+
+    .btn-primary:hover, .btn-primary:active {
+        background-color: #29487d;
+        border-color: #29487d;
+    } 
+
+.btn-secondary {
+    background-color: #f6f7f9;
+    border-color: #ced0d4;
+    color: #4b4f56;
+}
+    .btn-secondary:hover {
+        background-color: #e9ebee;
+    }
+
+    .btn-secondary:active {
+        background-color: #dddfe2;
+        border-color: #bec2c9;
+    }
 
 .btn-default {
     color: #666666;
@@ -321,6 +341,28 @@ small.text-muted {
 
 .conversation-timestamp {
     font-size: 9px;
+}
+
+.requestor-name a {
+    color: #3B5999;
+}
+
+.requestor-name a:hover {
+    text-decoration: underline;
+}
+
+.request-buttons {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+.tooltip-text a {
+    color: #999;
+}
+
+.tooltip-text a:hover {
+    text-decoration: underline;
 }
 
 .emphasize {

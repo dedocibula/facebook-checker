@@ -1,0 +1,31 @@
+﻿{{#each this}}
+<div id="{{id}}" class="list-group-item {{checkNew state}}">
+    <div class="row">
+        <div class="col-xs-2">
+            {{renderPicture requestor}}
+        </div>
+        <div class="col-xs-5">
+            <div class="requestor-name">
+                <div>
+                    <a class="openable emphasize" href="{{url}}">{{text}}</a>
+                </div>
+            </div>
+            <div class="tooltip-text">
+                <a class="openable" href="{{mutualFriendTooltip}}">{{mutualFriendText}}</a>
+            </div>
+        </div>
+        <div class="col-xs-5">
+            <div class="request-buttons">
+                <button type="button" class="btn btn-primary btn-sm">Confirm</button>
+                <button type="button" class="btn btn-secondary btn-sm">Reject</button>
+            </div>
+        </div>
+    </div>
+</div>
+{{else}}
+<div class="row list-group-item">
+    <div class="col-xs-12">
+        <span class="center-block">No friend requests found</span>
+    </div>
+</div>
+{{/each}}

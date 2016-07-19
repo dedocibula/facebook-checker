@@ -3,6 +3,7 @@
         baseUrl: string;
         notificationsUri: string;
         messageBoxUri: string;
+        friendRequestsUri: string;
         preferences: Entities.EntityType[];
         defaultType: Entities.EntityType;
 
@@ -23,6 +24,7 @@
 
         notificationsTemplate: string;
         messagesTemplate: string;
+        friendRequestsTemplate: string;
     }
 
     class Controller {
@@ -115,6 +117,8 @@
                 this.renderer.renderNotifications(response.notifications);
             else if (entityType === Entities.EntityType.Messages)
                 this.renderer.renderMessages(response.messages);
+            else if (entityType === Entities.EntityType.FriendRequests)
+                this.renderer.renderFriendRequests(response.friendRequests);
             else
                 throw new Error("Unrecognized type");
         }
@@ -127,6 +131,9 @@
                 } else if (entityType === Entities.EntityType.Messages && response.newMessages > 0) {
                     this.renderer.renderMessages(response.messages);
                     return;
+                } else if (entityType === Entities.EntityType.FriendRequests) {
+                    this.renderer.renderFriendRequests(response.friendRequests);
+                    return;
                 }
             }
             this.renderByType(this.defaultType, response);
@@ -135,7 +142,8 @@
         private updateHeaders(response: Entities.Response): void {
             this.renderer.updateUnreadCounts(
                 new Extensions.Pair(Entities.EntityType[Entities.EntityType.Notifications], response.newNotifications),
-                new Extensions.Pair(Entities.EntityType[Entities.EntityType.Messages], response.newMessages)
+                new Extensions.Pair(Entities.EntityType[Entities.EntityType.Messages], response.newMessages),
+                new Extensions.Pair(Entities.EntityType[Entities.EntityType.FriendRequests], response.newFriendRequests)
             );
         }
     }
@@ -143,6 +151,7 @@
     class Renderer {
         private notificationsUrl: string;
         private messageBoxUrl: string;
+        private friendRequestsUrl: string;
         private pictureSize: number;
 
         private $mainContainer: JQuery;
@@ -157,10 +166,12 @@
 
         private notificationsTemplate: HandlebarsTemplateDelegate;
         private messagesTemplate: HandlebarsTemplateDelegate;
+        private friendRequestsTemplate: HandlebarsTemplateDelegate;
 
         constructor(settings: ISettings) {
             this.notificationsUrl = settings.baseUrl + settings.notificationsUri;
             this.messageBoxUrl = settings.baseUrl + settings.messageBoxUri;
+            this.friendRequestsUrl = settings.baseUrl + settings.friendRequestsUri;
             this.pictureSize = settings.pictureSize;
 
             this.$mainContainer = $(settings.mainContainer);
@@ -186,6 +197,12 @@
             this.$mainSection.html(this.messagesTemplate(messages));
             this.footerLink.href = this.messageBoxUrl;
             this.makeSelected(Entities.EntityType.Messages);
+        }
+
+        public renderFriendRequests(friendRequests: Entities.FriendRequest[]): void {
+            this.$mainSection.html(this.friendRequestsTemplate(friendRequests));
+            this.footerLink.href = this.friendRequestsUrl;
+            this.makeSelected(Entities.EntityType.FriendRequests);
         }
 
         public updateUnreadState(entityType: Entities.EntityType, button: HTMLElement): void {
@@ -235,6 +252,7 @@
             // templates
             this.notificationsTemplate = Handlebars.templates[elements.notificationsTemplate];
             this.messagesTemplate = Handlebars.templates[elements.messagesTemplate];
+            this.friendRequestsTemplate = Handlebars.templates[elements.friendRequestsTemplate];
 
             // helpers
             Handlebars.registerHelper("checkNew", (state: Entities.State) => {
@@ -282,7 +300,8 @@
                 return !message.repliedLast ? "" : (message.seenByAll ? "seenByAll" : "repliedLast");
             });
 
-            Handlebars.registerHelper("renderPicture", (authors: Entities.Author[]) => {
+            Handlebars.registerHelper("renderPicture", (mainAuthors: Entities.Author | Entities.Author[]) => {
+                const authors: Entities.Author[] = $.isArray(mainAuthors) ? mainAuthors as Entities.Author[] : [mainAuthors] as Entities.Author[];
                 const count = Math.min(authors.length, 3);
                 let text: string = "";
                 for (let i = 1; i <= count; i++) {
@@ -340,7 +359,8 @@
             baseUrl: "https://www.facebook.com",
             notificationsUri: "/notifications",
             messageBoxUri: "/messages",
-            preferences: [Entities.EntityType.Messages, Entities.EntityType.Notifications],
+            friendRequestsUri: "/friends/requests",
+            preferences: [Entities.EntityType.Messages, Entities.EntityType.Notifications, Entities.EntityType.FriendRequests],
             defaultType: Entities.EntityType.Notifications,
 
             openableLinks: "a.openable",
@@ -348,7 +368,8 @@
             readButtons: ".read-button",
             navigationMappings: {
                 Notifications: "#notifications",
-                Messages: "#messages"
+                Messages: "#messages",
+                FriendRequests: "#friendRequests"
             },
             mainContainer: "#main",
             mainSection: "#main-section",
@@ -358,11 +379,12 @@
             authorizedSections: ".authorized",
             loaderImage: "#loader",
             footerLink: "#footer",
-            mainListItems: "#main-section .list-group-item",
+            mainListItems: "#main-section a.list-group-item",
             pictureSize: 50,
 
             notificationsTemplate: "notifications",
-            messagesTemplate: "messages"
+            messagesTemplate: "messages",
+            friendRequestsTemplate: "friendRequests"
         };
 
         const backendService: Api.IBackendService = new BackendProxy();
