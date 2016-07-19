@@ -131,7 +131,7 @@
                 } else if (entityType === Entities.EntityType.Messages && response.newMessages > 0) {
                     this.renderer.renderMessages(response.messages);
                     return;
-                } else if (entityType === Entities.EntityType.FriendRequests) {
+                } else if (entityType === Entities.EntityType.FriendRequests && response.newFriendRequests > 0) {
                     this.renderer.renderFriendRequests(response.friendRequests);
                     return;
                 }
