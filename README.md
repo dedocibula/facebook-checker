@@ -10,6 +10,8 @@ Provided features:
 * Support for Mark as Read
 * Recipient read status
 * Graphic emoji
+* Facebook Friend Requests monitoring
+* Friend request resolution
 
 ### Installation:
 
