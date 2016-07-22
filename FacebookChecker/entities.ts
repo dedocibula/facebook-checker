@@ -70,6 +70,16 @@
         }
     }
 
+    export class FriendInfo {
+        public requestId: string;
+        public accept: boolean;
+
+        constructor(requestId: string, accept: boolean) {
+            this.requestId = requestId;
+            this.accept = accept;
+        }
+    }
+
     export class Author {
         public fullName: string;
         public profilePicture: string;

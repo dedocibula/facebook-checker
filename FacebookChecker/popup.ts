@@ -10,6 +10,7 @@
         openableLinks: string;
         navigationLinks: string;
         readButtons: string;
+        friendRequestsButtons: string;
         navigationMappings: { [type: string]: string };
         mainContainer: string;
         mainSection: string;
@@ -37,6 +38,7 @@
         private openableLinks: string;
         private navigationLinks: string;
         private readButtons: string;
+        private friendRequestsButtons: string;
         private mainListItems: string;
 
         private $body: JQuery;
@@ -51,6 +53,7 @@
             this.openableLinks = settings.openableLinks;
             this.navigationLinks = settings.navigationLinks;
             this.readButtons = settings.readButtons;
+            this.friendRequestsButtons = settings.friendRequestsButtons;
             this.mainListItems = settings.mainListItems;
 
             this.$body = $("body");
@@ -60,7 +63,7 @@
             const self = this;
             self.$body
                 .off("click")
-                .on("click", self.readButtons, function(event) {
+                .on("click", self.readButtons, function (event) {
                     event.stopPropagation();
                     const button: HTMLElement = this as HTMLElement;
                     const readInfo: Entities.ReadInfo = JSON.parse(button.dataset["readInfo"]) as Entities.ReadInfo;
@@ -71,18 +74,27 @@
                             self.renderer.updateUnreadState(readInfo.entityType, button);
                     });
                 })
-                .on("click", self.openableLinks, function(event) {
+                .on("click", self.friendRequestsButtons, function (event) {
+                    event.preventDefault();
+                    const button: HTMLButtonElement = this as HTMLButtonElement;
+                    const friendInfo: Entities.FriendInfo = JSON.parse(button.dataset["friendInfo"]) as Entities.FriendInfo;
+                    self.renderer.toggleLoading();
+                    self.backendService.resolveFriendRequest(friendInfo, (response: Entities.Response) =>
+                        self.renderView(response, Entities.EntityType.FriendRequests)
+                    );
+                })
+                .on("click", self.openableLinks, function (event) {
                     event.preventDefault();
                     const link: HTMLLinkElement = this as HTMLLinkElement;
                     self.backendService.openLink(link.href);
                 })
-                .on("click", self.navigationLinks, function(event) {
+                .on("click", self.navigationLinks, function (event) {
                     event.preventDefault();
                     const link: HTMLElement = this as HTMLElement;
                     self.load(Entities.EntityType[(link.id.charAt(0).toUpperCase() + link.id.slice(1))]);
                 })
                 .off("mouseover mouseout")
-                .on("mouseover mouseout", self.mainListItems, function() {
+                .on("mouseover mouseout", self.mainListItems, function () {
                     const $button: JQuery = $(this).find(self.readButtons);
                     if (event.type === "mouseover")
                         $button.show();
@@ -93,23 +105,25 @@
 
         public load(entityType?: Entities.EntityType): void {
             this.renderer.toggleLoading();
-            this.backendService.fetchAll(response => {
-                if (response.status === Entities.ResponseStatus.Ok) {
-                    if (typeof entityType === "number")
-                        this.renderByType(entityType, response);
-                    else
-                        this.renderByPreferences(response);
-                    this.updateHeaders(response);
-                    this.renderer.displayMain();
-                } else if (response.status === Entities.ResponseStatus.Unauthorized) {
-                    this.renderer.displayUnauthorized();
-                } else if (response.status === Entities.ResponseStatus.IllegalToken) {
-                    this.renderer.displayError("Something went wrong! Try closing an opening extension window.");
-                } else if (response.status === Entities.ResponseStatus.ConnectionRejected) {
-                    this.renderer.displayError("We couldn't establish connection to Facebook! Make sure you have access to the Internet.");
-                }
-                this.renderer.toggleLoading(true);
-            });
+            this.backendService.fetchAll(response => this.renderView(response, entityType));
+        }
+
+        private renderView(response: Entities.Response, entityType?: Entities.EntityType) {
+            if (response.status === Entities.ResponseStatus.Ok) {
+                if (typeof entityType === "number")
+                    this.renderByType(entityType, response);
+                else
+                    this.renderByPreferences(response);
+                this.updateHeaders(response);
+                this.renderer.displayMain();
+            } else if (response.status === Entities.ResponseStatus.Unauthorized) {
+                this.renderer.displayUnauthorized();
+            } else if (response.status === Entities.ResponseStatus.IllegalToken) {
+                this.renderer.displayError("Something went wrong! Try closing an opening extension window.");
+            } else if (response.status === Entities.ResponseStatus.ConnectionRejected) {
+                this.renderer.displayError("We couldn't establish connection to Facebook! Make sure you have access to the Internet.");
+            }
+            this.renderer.toggleLoading(true);
         }
 
         private renderByType(entityType: Entities.EntityType, response: Entities.Response): void {
@@ -280,6 +294,10 @@
                 return JSON.stringify(new Entities.ReadInfo(readableEntity.type, readableEntity.state, readableEntity.alertId));
             });
 
+            Handlebars.registerHelper("serializeFriendInfo", (id: string, accept: boolean) => {
+                return JSON.stringify(new Entities.FriendInfo(id, accept));
+            });
+
             Handlebars.registerHelper("emojify", (message: Entities.Message) => {
                 let text: string = "", current: number = 0;
                 const original: string = message.text, emoticons: Extensions.Pair<Extensions.Range, string>[] = message.emoticons;
@@ -344,6 +362,10 @@
             this.internalRequest("markRead", [readInfo], onReady);
         }
 
+        public resolveFriendRequest(friendInfo: Entities.FriendInfo, onReady?: (response: Entities.Response) => void): void {
+            this.internalRequest("resolveFriendRequest", [friendInfo], onReady);
+        }
+
         private internalRequest(action: string, parameters?: any[], onReady?: (response: Entities.Response) => void): void {
             if (chrome && chrome.runtime) {
                 chrome.runtime.sendMessage(new Entities.Request(action, parameters), (response: Entities.Response) => {
@@ -366,6 +388,7 @@
             openableLinks: "a.openable",
             navigationLinks: "nav li",
             readButtons: ".read-button",
+            friendRequestsButtons: ".friend-request-button",
             navigationMappings: {
                 Notifications: "#notifications",
                 Messages: "#messages",

@@ -13,6 +13,8 @@
         markNotificationRead(token: string, id: string): Promise<void>;
 
         markMessageRead(token: string, id: string): Promise<void>;
+
+        resolveFriendRequest(token: string, id: string, accept: boolean): Promise<void>;
     }
 
     export interface IBackendService {
@@ -21,6 +23,8 @@
         openLink(url: string): void;
 
         markRead(readInfo: Entities.ReadInfo, onReady?: (response: Entities.Response) => void): void;
+
+        resolveFriendRequest(friendInfo: Entities.FriendInfo, onReady?: (response: Entities.Response) => void): void;
     }
 
     export interface INotifiable {

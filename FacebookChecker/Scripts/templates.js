@@ -17,7 +17,11 @@ templates['friendRequests'] = template({"1":function(depth0,helpers,partials,dat
     + alias3(((helper = (helper = helpers.mutualFriendTooltip || (depth0 != null ? depth0.mutualFriendTooltip : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"mutualFriendTooltip","hash":{},"data":data}) : helper)))
     + "\">"
     + alias3(((helper = (helper = helpers.mutualFriendText || (depth0 != null ? depth0.mutualFriendText : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"mutualFriendText","hash":{},"data":data}) : helper)))
-    + "</a>\r\n            </div>\r\n        </div>\r\n        <div class=\"col-xs-5\">\r\n            <div class=\"request-buttons\">\r\n                <button type=\"button\" class=\"btn btn-primary btn-sm\">Confirm</button>\r\n                <button type=\"button\" class=\"btn btn-secondary btn-sm\">Reject</button>\r\n            </div>\r\n        </div>\r\n    </div>\r\n</div>\r\n";
+    + "</a>\r\n            </div>\r\n        </div>\r\n        <div class=\"col-xs-5\">\r\n            <div class=\"request-buttons\">\r\n                <button type=\"button\" class=\"btn btn-primary btn-sm friend-request-button\" data-friend-info=\""
+    + alias3((helpers.serializeFriendInfo || (depth0 && depth0.serializeFriendInfo) || alias1).call(depth0,(depth0 != null ? depth0.id : depth0),true,{"name":"serializeFriendInfo","hash":{},"data":data}))
+    + "\">Confirm</button>\r\n                <button type=\"button\" class=\"btn btn-secondary btn-sm friend-request-button\" data-friend-info=\""
+    + alias3((helpers.serializeFriendInfo || (depth0 && depth0.serializeFriendInfo) || alias1).call(depth0,(depth0 != null ? depth0.id : depth0),false,{"name":"serializeFriendInfo","hash":{},"data":data}))
+    + "\">Reject</button>\r\n            </div>\r\n        </div>\r\n    </div>\r\n</div>\r\n";
 },"3":function(depth0,helpers,partials,data) {
     return "<div class=\"row list-group-item\">\r\n    <div class=\"col-xs-12\">\r\n        <span class=\"center-block\">No friend requests found</span>\r\n    </div>\r\n</div>\r\n";
 },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {

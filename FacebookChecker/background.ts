@@ -72,6 +72,19 @@
                 });
         }
 
+        public resolveFriendRequest(friendInfo: Entities.FriendInfo, onReady?: (response: Entities.Response) => void): void {
+            this.try((info: Entities.FacebookInfo) => this.loader.resolveFriendRequest(info.token, friendInfo.requestId, friendInfo.accept),
+                () => new Entities.Response(Entities.ResponseStatus.Ok)).then(response => {
+                    if (response.status === Entities.ResponseStatus.Ok) {
+                        this.reloadAll().then(secondResponse => {
+                            if (typeof onReady === "function")
+                                onReady(secondResponse);
+                            this.processResponse(secondResponse);
+                        });
+                    }
+                });
+        }
+
         public stop(): void {
             if (!this.timer)
                 return;
@@ -260,6 +273,7 @@
 
         private static get MARK_NOTIFICATION_READ_URI(): string { return "/ajax/notifications/mark_read.php"; }
         private static get MARK_MESSAGE_READ_URI(): string { return "/ajax/mercury/change_read_status.php"; }
+        private static get RESOLVE_FRIEND_REQUEST_URI(): string { return "/ajax/reqs.php?dpr=1"; }
 
         private settings: ISettings;
         private localResources: { [url: string]: string };
@@ -394,6 +408,32 @@
 
                 $.ajax({
                     url: this.settings.baseUrl + Loader.MARK_MESSAGE_READ_URI + this.settings.uriSuffix,
+                    method: "POST",
+                    accepts: "*/*",
+                    dataType: "text",
+                    data: data
+                }).done(() => {
+                    resolve();
+                }).fail(() => {
+                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                });
+            });
+        }
+
+        public resolveFriendRequest(token: string, id: string, accept: boolean): Promise<void> {
+            return new Promise<void>((resolve, reject) => {
+                const data: any = {};
+                data[`actions[${accept ? "accept" : "reject"}]`] = 1;
+                data.type = "friend_connect";
+                data.request_id = id;
+                data.confirm = id;
+                data.list_item_id = `${id}_1_req`;
+                data.status_div_id = `${data.list_item_id}_status`;
+                data.fb_dtsg = token;
+                data.__a = 1;
+
+                $.ajax({
+                    url: this.settings.baseUrl + Loader.RESOLVE_FRIEND_REQUEST_URI,
                     method: "POST",
                     accepts: "*/*",
                     dataType: "text",
