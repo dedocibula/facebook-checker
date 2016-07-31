@@ -479,10 +479,11 @@
                 const authors: Entities.Author[] = participantIds.map(participantId => participants[participantId]);
                 const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
                 const repliedLast: boolean = message.snippet_sender === userId;
+                const lastSender: Entities.Author = participants[message.snippet_sender];
                 const text: string = this.formMessageText(message.snippet, message.snippet_has_attachment ? message.snippet_attachments[0].attach_type : null,
-                    !repliedLast && authors.length > 1, !repliedLast ? authors[0].shortName : "You");
+                    !repliedLast && authors.length > 1, !repliedLast ? lastSender.shortName : "You");
                 const emoticons: Extensions.Pair<Extensions.Range, string>[] = Extensions.EmoticonHelper.identifyEmoticons(text);
-                const picture: string = authors[0].profilePicture;
+                const picture: string = lastSender.profilePicture;
                 const state: Entities.State = this.parseState(message.unread_count as number);
                 const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
                 const url: string = this.settings.baseUrl + prefix + message.thread_fbid;
