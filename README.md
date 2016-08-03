@@ -1,7 +1,7 @@
 ## Facebook Checker
 
-Facebook Checker is a Google Chrome extension written in TypeScript for the purposes of monitoring Facebook notifications and inbox messages.
-The application leverages JavaScript libraries JQuery and JQuery-UI, Chrome API and templating framework Handlebars.
+Facebook Checker is a Google Chrome extension written in TypeScript for the purposes of monitoring Facebook notifications, friend requests and inbox messages.
+The application leverages JavaScript libraries JQuery and JQuery-UI, Chrome API, Bootstrap and templating framework Handlebars.
 
 Provided features:
 * Facebook Notifications monitoring
