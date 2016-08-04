@@ -479,7 +479,7 @@
                 const authors: Entities.Author[] = participantIds.map(participantId => participants[participantId]);
                 const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
                 const repliedLast: boolean = message.snippet_sender === userId;
-                const lastSender: Entities.Author = participants[message.snippet_sender];
+                const lastSender: Entities.Author = participants[message.snippet_sender] || authors[0];
                 const text: string = this.formMessageText(message.snippet, message.snippet_has_attachment ? message.snippet_attachments[0].attach_type : null,
                     !repliedLast && authors.length > 1, !repliedLast ? lastSender.shortName : "You");
                 const emoticons: Extensions.Pair<Extensions.Range, string>[] = Extensions.EmoticonHelper.identifyEmoticons(text);
