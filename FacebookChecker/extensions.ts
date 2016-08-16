@@ -11,6 +11,7 @@
                 "8-)": "emojiglasses",
                 "(^^^)": "emojishark",
                 "(y)": "emojilike",
+                "(Y)": "emojilike",
                 "-_-": "emojisquint",
                 ":3": "emojicolonthree",
                 ":'(": "emojicry",
