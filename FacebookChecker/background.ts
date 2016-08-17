@@ -488,7 +488,8 @@
                 const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
                 const url: string = this.settings.baseUrl + prefix + message.thread_fbid;
                 const seenByAll: boolean = json.roger[message.thread_fbid] && participantIds.map(participantId => participantId.substring(5))
-                    .every(participantId => json.roger[message.thread_fbid][participantId] && json.roger[message.thread_fbid][participantId] - message.last_message_timestamp === 0);
+                    .every(participantId => json.roger[message.thread_fbid][participantId] && json.roger[message.thread_fbid][participantId].watermark &&
+                        json.roger[message.thread_fbid][participantId].watermark - message.last_message_timestamp === 0);
 
                 return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.thread_fbid, message.timestamp_relative, url, repliedLast, seenByAll, emoticons);
             });
