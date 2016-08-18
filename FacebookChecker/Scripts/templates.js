@@ -1,7 +1,7 @@
 (function() {
   var template = Handlebars.template, templates = Handlebars.templates = Handlebars.templates || {};
 templates['friendRequests'] = template({"1":function(depth0,helpers,partials,data) {
-    var helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;
+    var stack1, helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;
 
   return "<div id=\""
     + alias3(((helper = (helper = helpers.id || (depth0 != null ? depth0.id : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"id","hash":{},"data":data}) : helper)))
@@ -13,21 +13,27 @@ templates['friendRequests'] = template({"1":function(depth0,helpers,partials,dat
     + alias3(((helper = (helper = helpers.url || (depth0 != null ? depth0.url : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"url","hash":{},"data":data}) : helper)))
     + "\">"
     + alias3(((helper = (helper = helpers.text || (depth0 != null ? depth0.text : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"text","hash":{},"data":data}) : helper)))
-    + "</a>\r\n                </div>\r\n            </div>\r\n            <div class=\"tooltip-text\">\r\n                <a class=\"openable\" href=\""
-    + alias3(((helper = (helper = helpers.mutualFriendTooltip || (depth0 != null ? depth0.mutualFriendTooltip : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"mutualFriendTooltip","hash":{},"data":data}) : helper)))
-    + "\">"
-    + alias3(((helper = (helper = helpers.mutualFriendText || (depth0 != null ? depth0.mutualFriendText : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"mutualFriendText","hash":{},"data":data}) : helper)))
-    + "</a>\r\n            </div>\r\n        </div>\r\n        <div class=\"col-xs-5\">\r\n            <div class=\"request-buttons\">\r\n                <button type=\"button\" class=\"btn btn-primary btn-sm friend-request-button\" data-friend-info=\""
+    + "</a>\r\n                </div>\r\n            </div>\r\n"
+    + ((stack1 = helpers['if'].call(depth0,(depth0 != null ? depth0.mutualFriendText : depth0),{"name":"if","hash":{},"fn":this.program(2, data, 0),"inverse":this.noop,"data":data})) != null ? stack1 : "")
+    + "        </div>\r\n        <div class=\"col-xs-5\">\r\n            <div class=\"request-buttons\">\r\n                <button type=\"button\" class=\"btn btn-primary btn-sm friend-request-button\" data-friend-info=\""
     + alias3((helpers.serializeFriendInfo || (depth0 && depth0.serializeFriendInfo) || alias1).call(depth0,(depth0 != null ? depth0.id : depth0),true,{"name":"serializeFriendInfo","hash":{},"data":data}))
     + "\">Confirm</button>\r\n                <button type=\"button\" class=\"btn btn-secondary btn-sm friend-request-button\" data-friend-info=\""
     + alias3((helpers.serializeFriendInfo || (depth0 && depth0.serializeFriendInfo) || alias1).call(depth0,(depth0 != null ? depth0.id : depth0),false,{"name":"serializeFriendInfo","hash":{},"data":data}))
     + "\">Reject</button>\r\n            </div>\r\n        </div>\r\n    </div>\r\n</div>\r\n";
-},"3":function(depth0,helpers,partials,data) {
+},"2":function(depth0,helpers,partials,data) {
+    var helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;
+
+  return "            <div class=\"tooltip-text\">\r\n                <a class=\"openable\" href=\""
+    + alias3(((helper = (helper = helpers.mutualFriendTooltip || (depth0 != null ? depth0.mutualFriendTooltip : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"mutualFriendTooltip","hash":{},"data":data}) : helper)))
+    + "\">"
+    + alias3(((helper = (helper = helpers.mutualFriendText || (depth0 != null ? depth0.mutualFriendText : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"mutualFriendText","hash":{},"data":data}) : helper)))
+    + "</a>\r\n            </div>\r\n";
+},"4":function(depth0,helpers,partials,data) {
     return "<div class=\"row list-group-item\">\r\n    <div class=\"col-xs-12\">\r\n        <span class=\"center-block\">No friend requests found</span>\r\n    </div>\r\n</div>\r\n";
 },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
     var stack1;
 
-  return ((stack1 = helpers.each.call(depth0,depth0,{"name":"each","hash":{},"fn":this.program(1, data, 0),"inverse":this.program(3, data, 0),"data":data})) != null ? stack1 : "");
+  return ((stack1 = helpers.each.call(depth0,depth0,{"name":"each","hash":{},"fn":this.program(1, data, 0),"inverse":this.program(4, data, 0),"data":data})) != null ? stack1 : "");
 },"useData":true});
 templates['messages'] = template({"1":function(depth0,helpers,partials,data) {
     var helper, alias1=helpers.helperMissing, alias2="function", alias3=this.escapeExpression;

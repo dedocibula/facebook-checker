@@ -504,8 +504,8 @@
                 const requestor: Entities.Author = new Entities.Author(links[0].innerText, picture, links[0].innerText.split(" ")[0]);
                 const state: Entities.State = this.parseState($friendRequest.hasClass("jewelItemNew"));
                 const url: string = links[0].href;
-                const mutualFriendText: string = links[1].parentElement.innerText;
-                const mutualFriendTooltip: string = this.settings.baseUrl + links[1].pathname + links[1].search;
+                const mutualFriendText: string = links[1] ? links[1].parentElement.innerText : null;
+                const mutualFriendTooltip: string = links[1] ? this.settings.baseUrl + links[1].pathname + links[1].search : null;
 
                 return new Entities.FriendRequest(id, requestor.fullName, requestor, picture, state, url, mutualFriendText, mutualFriendTooltip);
             }).toArray() as Entities.FriendRequest[];

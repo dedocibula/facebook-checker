@@ -172,7 +172,7 @@
         public mutualFriendText: string;
         public mutualFriendTooltip: string;
 
-        constructor(id: string, text: string, requestor: Author, picture: string, state: State, url: string, mutualFriendText: string, mutualFriendTooltip: string) {
+        constructor(id: string, text: string, requestor: Author, picture: string, state: State, url: string, mutualFriendText?: string, mutualFriendTooltip?: string) {
             super(id, EntityType.FriendRequests, text, state, url, picture);
             this.requestor = requestor;
             this.mutualFriendText = mutualFriendText;
