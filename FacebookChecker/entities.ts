@@ -150,13 +150,15 @@
 
     export class Message extends InformativeEntity {
         public header: string;
+        public pending: boolean;
         public repliedLast: boolean;
         public seenByAll: boolean;
         public emoticons: Extensions.Pair<Extensions.Range, string>[];
 
-        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string, repliedLast: boolean, seenByAll: boolean, emoticons: Extensions.Pair<Extensions.Range, string>[]) {
+        constructor(id: string, header: string, text: string, authors: Author[], picture: string, state: State, alertId: string, timestamp: string, url: string, pending: boolean, repliedLast: boolean, seenByAll: boolean, emoticons: Extensions.Pair<Extensions.Range, string>[]) {
             super(id, authors, EntityType.Messages, text, state, url, picture, timestamp, alertId);
             this.header = header;
+            this.pending = pending;
             this.repliedLast = repliedLast;
             this.seenByAll = seenByAll;
             this.emoticons = emoticons;

@@ -98,6 +98,9 @@
                 this.loader.getMessagesAsync(info.token, info.profileUrl),
                 this.loader.getFriendRequestsAsync(info.token)
             ]), (entities: Entities.FacebookEntity[][]) => {
+                // filter out old message requests
+                entities[1] = (entities[1] as Entities.Message[]).filter(message => !message.pending || message.state !== Entities.State.Read);
+
                 const newNotifications: number = entities[0].filter(entity => entity.state !== Entities.State.Read).length;
                 const newMessages: number = entities[1].filter(entity => entity.state !== Entities.State.Read).length;
                 const newFriendRequests: number = entities[2].filter(entity => entity.state !== Entities.State.Read).length;
@@ -329,7 +332,7 @@
                     method: "POST",
                     accepts: "*/*",
                     dataType: "text",
-                    data: { "inbox[offset]": 0, "inbox[limit]": this.settings.fetchLimit, __a: 1, fb_dtsg: token }
+                    data: { "inbox[offset]": 0, "inbox[limit]": this.settings.fetchLimit, "pending[offset]": 0, "pending[limit]": this.settings.fetchLimit, __a: 1, fb_dtsg: token }
                 }).done((result: string) => {
                     const response = JSON.parse((result).match(/{.*}/)[0]);
                     if (!response.error)
@@ -478,6 +481,7 @@
                 const participantIds: string[] = (message.participants as Array<string>).filter(participantId => participantId !== userId);
                 const authors: Entities.Author[] = participantIds.map(participantId => participants[participantId]);
                 const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
+                const pending: boolean = message.folder === "pending";
                 const repliedLast: boolean = message.snippet_sender === userId;
                 const lastSender: Entities.Author = participants[message.snippet_sender] || authors[0];
                 const text: string = this.formMessageText(message.snippet, message.snippet_has_attachment ? message.snippet_attachments[0].attach_type : null,
@@ -491,7 +495,7 @@
                     .every(participantId => json.roger[message.thread_fbid][participantId] && json.roger[message.thread_fbid][participantId].watermark &&
                         json.roger[message.thread_fbid][participantId].watermark - message.last_message_timestamp === 0);
 
-                return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.thread_fbid, message.timestamp_relative, url, repliedLast, seenByAll, emoticons);
+                return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.thread_fbid, message.timestamp_relative, url, pending, repliedLast, seenByAll, emoticons);
             });
         }
 
