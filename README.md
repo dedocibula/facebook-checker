@@ -5,7 +5,7 @@ The application leverages JavaScript libraries JQuery and JQuery-UI, Chrome API,
 
 Provided features:
 * Facebook Notifications monitoring
-* Facebook Messages monitoring
+* Facebook Messages/Message Requests monitoring
 * Desktop alerts
 * Support for Mark as Read
 * Recipient read status
