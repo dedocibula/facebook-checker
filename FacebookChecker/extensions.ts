@@ -622,4 +622,26 @@
 
         public get maxWordLength(): number { return this.maxLength; }
     }
+
+    export class FacebookError extends Error {
+        public name: string;
+        public message: string;
+        public type: Entities.ResponseStatus;
+
+        private date: Date;
+        private stack: string;
+
+        constructor(type: Entities.ResponseStatus, response?: { errorSummary: string, errorDescription: string }) {
+            super();
+            this.name = Entities.ResponseStatus[type];
+            this.message = !response ? "" : `${response.errorSummary} (${response.errorDescription})`;
+            this.type = type;
+            this.date = new Date();
+            this.stack = (new Error() as any).stack.split("\n").splice(2).join("\n");
+        }
+
+        public toString(): string {
+            return `FacebookError: ${this.name}\n${this.message ? `Summary: ${this.message}\n` : ""}Date: ${this.date}\n${this.stack}`;
+        }
+    }
 }

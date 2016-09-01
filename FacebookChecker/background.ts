@@ -128,14 +128,14 @@
                     this.info = info;
                     action(info).then((result: T) => {
                         resolve(mapper(result));
-                    }, (error: any) => {
+                    }, (error: Extensions.FacebookError) => {
                         this.info = null;
-                        console.error(`Date: ${new Date()}, ${error.stack}`);
-                        resolve(new Entities.Response(Entities.ResponseStatus[error.message as string]));
+                        console.error(error.toString());
+                        resolve(new Entities.Response(error.type));
                     });
-                }, (error: any) => {
-                    console.error(`Date: ${new Date()}, ${error.stack}`);
-                    resolve(new Entities.Response(Entities.ResponseStatus[error.message as string]));
+                }, (error: Extensions.FacebookError) => {
+                    console.error(error.toString());
+                    resolve(new Entities.Response(error.type));
                 });
             });
         }
@@ -297,9 +297,9 @@
                     if ($(result).find("#login_form").length === 0)
                         resolve(this.parseInfo(result));
                     else
-                        reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.Unauthorized]));
+                        reject(new Extensions.FacebookError(Entities.ResponseStatus.Unauthorized));
                 }).fail(() => {
-                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                    reject(new Extensions.FacebookError(Entities.ResponseStatus.ConnectionRejected));
                 });
             });
         }
@@ -317,10 +317,10 @@
                     if (!response.error)
                         resolve(this.parseNotifications(response.payload));
                     else
-                        reject(new Error(Entities.ResponseStatus[response.error === 1357001 ?
-                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken]));
+                        reject(new Extensions.FacebookError(response.error === 1357001 ?
+                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken, response));
                 }).fail(() => {
-                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                    reject(new Extensions.FacebookError(Entities.ResponseStatus.ConnectionRejected));
                 });
             });
         }
@@ -338,10 +338,10 @@
                     if (!response.error)
                         resolve(this.parseMessages(response.payload, profileUrl));
                     else
-                        reject(new Error(Entities.ResponseStatus[response.error === 1357001 ?
-                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken]));
+                        reject(new Extensions.FacebookError(response.error === 1357001 ?
+                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken, response));
                 }).fail(() => {
-                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                    reject(new Extensions.FacebookError(Entities.ResponseStatus.ConnectionRejected));
                 });
             });
         }
@@ -359,10 +359,10 @@
                     if (!response.error && response.domops && response.domops[0] && response.domops[0][3] && response.domops[0][3].__html)
                         resolve(this.parseFriendRequests(response.domops[0][3].__html));
                     else
-                        reject(new Error(Entities.ResponseStatus[response.error === 1357001 ?
-                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken]));
+                        reject(new Extensions.FacebookError(response.error === 1357001 ?
+                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken, response));
                 }).fail(() => {
-                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                    reject(new Extensions.FacebookError(Entities.ResponseStatus.ConnectionRejected));
                 });
             });
         }
@@ -396,7 +396,7 @@
                 }).done(() => {
                     resolve();
                 }).fail(() => {
-                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                    reject(new Extensions.FacebookError(Entities.ResponseStatus.ConnectionRejected));
                 });
             });
         }
@@ -418,7 +418,7 @@
                 }).done(() => {
                     resolve();
                 }).fail(() => {
-                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                    reject(new Extensions.FacebookError(Entities.ResponseStatus.ConnectionRejected));
                 });
             });
         }
@@ -444,7 +444,7 @@
                 }).done(() => {
                     resolve();
                 }).fail(() => {
-                    reject(new Error(Entities.ResponseStatus[Entities.ResponseStatus.ConnectionRejected]));
+                    reject(new Extensions.FacebookError(Entities.ResponseStatus.ConnectionRejected));
                 });
             });
         }
