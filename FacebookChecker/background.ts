@@ -12,6 +12,7 @@
         notificationIcon: string;
         onlineIcon: string;
         offlineIcon: string;
+        badgeColor: number[];
     }
 
     class BackgroundWorker implements Api.IBackendService {
@@ -248,8 +249,10 @@
         }
 
         public updateUnreadCounter(value: number): void {
-            if (chrome && chrome.browserAction)
+            if (chrome && chrome.browserAction) {
+                chrome.browserAction.setBadgeBackgroundColor({ color: this.settings.badgeColor });
                 chrome.browserAction.setBadgeText({ text: value > 0 ? value.toString() : "" });
+            }
         }
 
         public updateExtensionIcon(online: boolean): void {
@@ -575,7 +578,8 @@
             contextMessage: "www.facebook.com",
             notificationIcon: "Images/icon48.png",
             onlineIcon: "Images/icon19.png",
-            offlineIcon: "Images/icon-loggedout.png"
+            offlineIcon: "Images/icon-loggedout.png",
+            badgeColor: [232, 76, 61, 255]
         };
 
         const loader: Api.ILoader = new Loader(settings);
