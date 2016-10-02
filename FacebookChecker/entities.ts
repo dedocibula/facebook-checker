@@ -55,7 +55,8 @@
     export enum EntityType {
         Notifications,
         Messages,
-        FriendRequests
+        FriendRequests,
+        MessageRequests
     }
 
     export class ReadInfo {

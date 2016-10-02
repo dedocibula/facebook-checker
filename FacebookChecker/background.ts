@@ -3,6 +3,7 @@
         baseUrl: string;
         uriSuffix: string;
         refreshInterval: number;
+        backoffCounts: Extensions.Pair<Entities.EntityType, number>[];
         fetchLimit: number;
         notificationFadeoutDelay: number;
         simpleMessagePrefix: string;
@@ -25,6 +26,7 @@
 
         private info: Entities.FacebookInfo;
         private unread: { [key: string]: string };
+        private loadCache: Extensions.CountDownCache<Entities.EntityType, Entities.FacebookEntity[]>;
 
         constructor(settings: ISettings, loader: Api.ILoader, chrome: ChromeService) {
             this.settings = settings;
@@ -34,6 +36,7 @@
             this.isOnline = false;
 
             this.unread = {};
+            this.loadCache = new Extensions.CountDownCache<Entities.EntityType, Entities.FacebookEntity[]>(this.expandCounters(this.settings.backoffCounts));
         }
 
         public start(onFirst?: (response: Entities.Response) => void): void {
@@ -51,6 +54,7 @@
 
         public fetchAll(onReady?: (response: Entities.Response) => void): void {
             this.stop();
+            this.loadCache.invalidate();
             this.start(typeof onReady === "function" ? onReady : null);
         }
 
@@ -68,15 +72,18 @@
                 () => new Entities.Response(Entities.ResponseStatus.Ok)).then(response => {
                     if (typeof onReady === "function")
                         onReady(response);
-                    if (response.status === Entities.ResponseStatus.Ok)
+                    if (response.status === Entities.ResponseStatus.Ok) {
+                        this.loadCache.invalidate();
                         this.reloadAll().then(secondResponse => this.processResponse(secondResponse));
-                });
+                    }
+            });
         }
 
         public resolveFriendRequest(friendInfo: Entities.FriendInfo, onReady?: (response: Entities.Response) => void): void {
             this.try((info: Entities.FacebookInfo) => this.loader.resolveFriendRequest(info.token, friendInfo.requestId, friendInfo.accept),
                 () => new Entities.Response(Entities.ResponseStatus.Ok)).then(response => {
                     if (response.status === Entities.ResponseStatus.Ok) {
+                        this.loadCache.invalidate();
                         this.reloadAll().then(secondResponse => {
                             if (typeof onReady === "function")
                                 onReady(secondResponse);
@@ -95,10 +102,10 @@
 
         private reloadAll(): Promise<Entities.Response> {
             return this.try((info: Entities.FacebookInfo) => Promise.all<Entities.FacebookEntity[]>([
-                this.loader.getNotificationsAsync(info.token),
-                this.loader.getMessagesAsync(info.token, info.profileUrl),
-                this.loader.getFriendRequestsAsync(info.token),
-                this.loader.getMessageRequestsAsync(info.token, info.profileUrl)
+                this.expiringLoad(Entities.EntityType.Notifications, () => this.loader.getNotificationsAsync(info.token)),
+                this.expiringLoad(Entities.EntityType.Messages, () => this.loader.getMessagesAsync(info.token, info.profileUrl)),
+                this.expiringLoad(Entities.EntityType.FriendRequests, () => this.loader.getFriendRequestsAsync(info.token)),
+                this.expiringLoad(Entities.EntityType.MessageRequests, () => this.loader.getMessageRequestsAsync(info.token, info.profileUrl))
             ]), (entities: Entities.FacebookEntity[][]) => {
                 // concatenate unread message requests
                 entities[1] = entities[1].concat((entities[3] as Entities.Message[]).filter(message => message.state !== Entities.State.Read));
@@ -142,6 +149,15 @@
             });
         }
 
+        private expiringLoad<T extends Entities.FacebookEntity>(entityType: Entities.EntityType, eagerAction: () => Promise<T[]>): Promise<T[]> {
+            return this.loadCache.contains(entityType) ?
+                Promise.resolve(this.loadCache.retrieve(entityType)) :
+                eagerAction().then(result => {
+                    this.loadCache.store(entityType, result);
+                    return result;
+                });
+        }
+
         private checkNew<T extends Entities.FacebookEntity>(entities: T[], isNewPredicate: (entity: T) => boolean): void {
             for (let entity of entities) {
                 if (isNewPredicate(entity))
@@ -172,6 +188,15 @@
             if (this.isOnline !== value)
                 this.chrome.updateExtensionIcon(value);
             this.isOnline = value;
+        }
+
+        private expandCounters(backoffCounts: Extensions.Pair<Entities.EntityType, number>[]): Extensions.Pair<Entities.EntityType, number>[] {
+            const result: { [index: string]: number } = {};
+            for (let type of Object.keys(Entities.EntityType))
+                result[type] = 0;
+            for (let count of backoffCounts)
+                result[Entities.EntityType[count.first]] = count.second;
+            return Object.keys(result).map(s => new Extensions.Pair(Entities.EntityType[s], result[s]));
         }
     }
 
@@ -584,6 +609,10 @@
             baseUrl: "https://www.facebook.com",
             uriSuffix: "?__pc=EXP1%3ADEFAULT",
             refreshInterval: 20 * 1000,
+            backoffCounts: [
+                new Extensions.Pair(Entities.EntityType.FriendRequests, 30),
+                new Extensions.Pair(Entities.EntityType.MessageRequests, 15)
+            ],
             notificationFadeoutDelay: 10 * 1000,
             fetchLimit: 5,
             simpleMessagePrefix: "/messages/",
