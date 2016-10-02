@@ -6,6 +6,8 @@
 
         getMessagesAsync(token: string, profileUrl: string): Promise<Entities.Message[]>;
 
+        getMessageRequestsAsync(token: string, profileUrl: string): Promise<Entities.Message[]>;
+
         getFriendRequestsAsync(token: string): Promise<Entities.FriendRequest[]>;
 
         getExternalResourceAsync(url: string): Promise<string>;

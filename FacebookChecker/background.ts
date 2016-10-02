@@ -97,10 +97,11 @@
             return this.try((info: Entities.FacebookInfo) => Promise.all<Entities.FacebookEntity[]>([
                 this.loader.getNotificationsAsync(info.token),
                 this.loader.getMessagesAsync(info.token, info.profileUrl),
-                this.loader.getFriendRequestsAsync(info.token)
+                this.loader.getFriendRequestsAsync(info.token),
+                this.loader.getMessageRequestsAsync(info.token, info.profileUrl)
             ]), (entities: Entities.FacebookEntity[][]) => {
-                // filter out old message requests
-                entities[1] = (entities[1] as Entities.Message[]).filter(message => !message.pending || message.state !== Entities.State.Read);
+                // concatenate unread message requests
+                entities[1] = entities[1].concat((entities[3] as Entities.Message[]).filter(message => message.state !== Entities.State.Read));
 
                 const newNotifications: number = entities[0].filter(entity => entity.state !== Entities.State.Read).length;
                 const newMessages: number = entities[1].filter(entity => entity.state !== Entities.State.Read).length;
@@ -329,24 +330,11 @@
         }
 
         public getMessagesAsync(token: string, profileUrl: string): Promise<Entities.Message[]> {
-            return new Promise<Entities.Message[]>((resolve, reject) => {
-                $.ajax({
-                    url: this.settings.baseUrl + Loader.MESSAGE_URI + this.settings.uriSuffix,
-                    method: "POST",
-                    accepts: "*/*",
-                    dataType: "text",
-                    data: { "inbox[offset]": 0, "inbox[limit]": this.settings.fetchLimit, "pending[offset]": 0, "pending[limit]": this.settings.fetchLimit, __a: 1, fb_dtsg: token }
-                }).done((result: string) => {
-                    const response = JSON.parse((result).match(/{.*}/)[0]);
-                    if (!response.error)
-                        resolve(this.parseMessages(response.payload, profileUrl));
-                    else
-                        reject(new Extensions.FacebookError(response.error === 1357001 ?
-                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken, response));
-                }).fail(() => {
-                    reject(new Extensions.FacebookError(Entities.ResponseStatus.ConnectionRejected));
-                });
-            });
+            return this.getMessagesOfTypeAsync("inbox", token, profileUrl);
+        }
+
+        public getMessageRequestsAsync(token: string, profileUrl: string): Promise<Entities.Message[]> {
+            return this.getMessagesOfTypeAsync("pending", token, profileUrl);
         }
 
         public getFriendRequestsAsync(token: string): Promise<Entities.FriendRequest[]> {
@@ -452,6 +440,33 @@
             });
         }
 
+        private getMessagesOfTypeAsync(type: string, token: string, profileUrl: string): Promise<Entities.Message[]> {
+            return new Promise<Entities.Message[]>((resolve, reject) => {
+                const data: any = {};
+                data[`${type}[offset]`] = 0;
+                data[`${type}[limit]`] = this.settings.fetchLimit;
+                data.fb_dtsg = token;
+                data.__a = 1;
+
+                $.ajax({
+                    url: this.settings.baseUrl + Loader.MESSAGE_URI + this.settings.uriSuffix,
+                    method: "POST",
+                    accepts: "*/*",
+                    dataType: "text",
+                    data: data
+                }).done((result: string) => {
+                    const response = JSON.parse((result).match(/{.*}/)[0]);
+                    if (!response.error)
+                        resolve(response.payload.threads ? this.parseMessages(response.payload, profileUrl) : []);
+                    else
+                        reject(new Extensions.FacebookError(response.error === 1357001 ?
+                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken, response));
+                }).fail(() => {
+                    reject(new Extensions.FacebookError(Entities.ResponseStatus.ConnectionRejected));
+                });
+            });
+        }
+
         private parseInfo(result: string): Entities.FacebookInfo {
             const token: string = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
             const profileUrl: string = ($(result).find("a[title='Profile']")[0] as HTMLLinkElement).href;
@@ -484,7 +499,6 @@
                 const participantIds: string[] = (message.participants as Array<string>).filter(participantId => participantId !== userId);
                 const authors: Entities.Author[] = participantIds.map(participantId => participants[participantId]);
                 const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
-                const pending: boolean = message.folder === "pending";
                 const repliedLast: boolean = message.snippet_sender === userId;
                 const lastSender: Entities.Author = participants[message.snippet_sender] || authors[0];
                 const text: string = this.formMessageText(message.snippet, message.snippet_has_attachment ? message.snippet_attachments[0].attach_type : null,
@@ -498,7 +512,7 @@
                     .every(participantId => json.roger[message.thread_fbid][participantId] && json.roger[message.thread_fbid][participantId].watermark &&
                         json.roger[message.thread_fbid][participantId].watermark - message.last_message_timestamp === 0);
 
-                return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.thread_fbid, message.timestamp_relative, url, pending, repliedLast, seenByAll, emoticons);
+                return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.thread_fbid, message.timestamp_relative, url, repliedLast, seenByAll, emoticons);
             });
         }
 
