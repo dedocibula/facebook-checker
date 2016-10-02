@@ -644,4 +644,58 @@
             return `FacebookError: ${this.name}\n${this.message ? `Summary: ${this.message}\n` : ""}Date: ${this.date}\n${this.stack}`;
         }
     }
+
+    export class CountDownCache<K, V> {
+        private cache: Map<K, Pair<V, number>>;
+        private counters: Map<K, number>;
+
+        constructor(counters: Pair<K, number>[]) {
+            this.cache = new Map<K, Pair<V, number>>();
+            this.counters = new Map<K, number>();
+            for (let counter of counters) {
+                this.counters.set(counter.first, Math.max(counter.second, 0));
+                this.cache.set(counter.first, new Pair(null, 0));
+            }
+        }
+
+        public store(key: K, value: V): void {
+            if (!this.cache.has(key))
+                throw new Error(`Unrecognized key: ${key}`);
+            this.cache.get(key).first = value;
+            this.cache.get(key).second = this.counters.get(key);
+        }
+
+        public contains(key: K): boolean {
+            return this.cache.has(key) && this.cache.get(key).second > 0;
+        }
+
+        public retrieve(key: K): V {
+            if (!this.contains(key))
+                return this.cache.get(key).first = null;
+            this.cache.get(key).second--;
+            return this.cache.get(key).first;
+        }
+
+        public invalidate(): void {
+            this.cache.forEach(value => {
+                value.first = null;
+                value.second = 0;
+            });
+        }
+    }
+
+    export interface Map<K, V> {
+        clear(): void;
+        delete(key: K): boolean;
+        forEach(callbackfn: (value: V, index: K, map: Map<K, V>) => void, thisArg?: any): void;
+        get(key: K): V;
+        has(key: K): boolean;
+        set(key: K, value: V): Map<K, V>;
+        size: number;
+    }
+
+    declare var Map: {
+        new <K, V>(): Map<K, V>;
+        prototype: Map<any, any>;
+    }
 }
