@@ -530,7 +530,7 @@
                     !repliedLast && authors.length > 1, !repliedLast ? lastSender.shortName : "You");
                 const emoticons: Extensions.Pair<Extensions.Range, string>[] = Extensions.EmoticonHelper.identifyEmoticons(text);
                 const picture: string = lastSender.profilePicture;
-                const state: Entities.State = this.parseState(message.unread_count as number);
+                const state: Entities.State = this.parseState(!repliedLast ? message.unread_count as number : 0);
                 const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
                 const url: string = this.settings.baseUrl + prefix + message.thread_fbid;
                 const seenByAll: boolean = json.roger[message.thread_fbid] && participantIds.map(participantId => participantId.substring(5))
