@@ -108,7 +108,7 @@
                 this.expiringLoad(Entities.EntityType.MessageRequests, () => this.loader.getMessageRequestsAsync(info.token, info.profileUrl))
             ]), (entities: Entities.FacebookEntity[][]) => {
                 // concatenate unread message requests
-                entities[1] = entities[1].concat((entities[3] as Entities.Message[]).filter(message => message.state !== Entities.State.Read));
+                entities[1] = (entities[3] as Entities.Message[]).filter(message => message.state !== Entities.State.Read).concat(entities[1] as Entities.Message[]);
 
                 const newNotifications: number = entities[0].filter(entity => entity.state !== Entities.State.Read).length;
                 const newMessages: number = entities[1].filter(entity => entity.state !== Entities.State.Read).length;

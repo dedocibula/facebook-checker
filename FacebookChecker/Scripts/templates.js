@@ -7,7 +7,7 @@ templates['friendRequests'] = template({"1":function(depth0,helpers,partials,dat
     + alias3(((helper = (helper = helpers.id || (depth0 != null ? depth0.id : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"id","hash":{},"data":data}) : helper)))
     + "\" class=\"list-group-item "
     + alias3((helpers.checkNew || (depth0 && depth0.checkNew) || alias1).call(depth0,(depth0 != null ? depth0.state : depth0),{"name":"checkNew","hash":{},"data":data}))
-    + "\">\r\n    <div class=\"row\">\r\n        <div class=\"col-xs-2\">\r\n            "
+    + "\">\r\n    <div class=\"row\">\r\n        <div class=\"col-xs-2 with-offset\">\r\n            "
     + alias3((helpers.renderPicture || (depth0 && depth0.renderPicture) || alias1).call(depth0,(depth0 != null ? depth0.requestor : depth0),{"name":"renderPicture","hash":{},"data":data}))
     + "\r\n        </div>\r\n        <div class=\"col-xs-5\">\r\n            <div class=\"requestor-name\">\r\n                <div>\r\n                    <a class=\"openable emphasize\" href=\""
     + alias3(((helper = (helper = helpers.url || (depth0 != null ? depth0.url : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"url","hash":{},"data":data}) : helper)))
@@ -44,7 +44,7 @@ templates['messages'] = template({"1":function(depth0,helpers,partials,data) {
     + alias3(((helper = (helper = helpers.url || (depth0 != null ? depth0.url : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"url","hash":{},"data":data}) : helper)))
     + "\" class=\"openable list-group-item "
     + alias3((helpers.checkNew || (depth0 && depth0.checkNew) || alias1).call(depth0,(depth0 != null ? depth0.state : depth0),{"name":"checkNew","hash":{},"data":data}))
-    + "\">\r\n    <div class=\"row\">\r\n        <div class=\"col-xs-2\">\r\n            "
+    + "\">\r\n    <div class=\"row\">\r\n        <div class=\"col-xs-2 with-offset\">\r\n            "
     + alias3((helpers.renderPicture || (depth0 && depth0.renderPicture) || alias1).call(depth0,(depth0 != null ? depth0.authors : depth0),{"name":"renderPicture","hash":{},"data":data}))
     + "\r\n        </div>\r\n        <div class=\"col-xs-10\">\r\n            <div class=\"conversation-name\">\r\n                <div>\r\n                    <span class=\"emphasize\">"
     + alias3(((helper = (helper = helpers.header || (depth0 != null ? depth0.header : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"header","hash":{},"data":data}) : helper)))
@@ -73,7 +73,7 @@ templates['notifications'] = template({"1":function(depth0,helpers,partials,data
     + alias3(((helper = (helper = helpers.url || (depth0 != null ? depth0.url : depth0)) != null ? helper : alias1),(typeof helper === alias2 ? helper.call(depth0,{"name":"url","hash":{},"data":data}) : helper)))
     + "\" class=\"openable list-group-item "
     + alias3((helpers.checkNew || (depth0 && depth0.checkNew) || alias1).call(depth0,(depth0 != null ? depth0.state : depth0),{"name":"checkNew","hash":{},"data":data}))
-    + "\">\r\n    <div class=\"row\">\r\n        <div class=\"col-xs-2\">\r\n            "
+    + "\">\r\n    <div class=\"row\">\r\n        <div class=\"col-xs-2 with-offset\">\r\n            "
     + alias3((helpers.renderPicture || (depth0 && depth0.renderPicture) || alias1).call(depth0,(depth0 != null ? depth0.authors : depth0),{"name":"renderPicture","hash":{},"data":data}))
     + "\r\n        </div>\r\n        \r\n        <div class=\""
     + ((stack1 = helpers['if'].call(depth0,(depth0 != null ? depth0.attachment : depth0),{"name":"if","hash":{},"fn":this.program(2, data, 0),"inverse":this.program(4, data, 0),"data":data})) != null ? stack1 : "")
