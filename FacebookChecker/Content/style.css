@@ -410,7 +410,7 @@ small.text-muted {
 #loader {
     position: absolute;
     top: 40px;
-    left: 185px;
+    left: 205px;
     z-index: 100;
 }
 
