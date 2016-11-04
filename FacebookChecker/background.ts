@@ -494,7 +494,7 @@
 
         private parseInfo(result: string): Entities.FacebookInfo {
             const token: string = result.match(/name="fb_dtsg" value="(.*?)" autocomplete/)[1];
-            const profileUrl: string = result.match(/"profileLink":{.*"href":"(.*?)"/)[1].split("\\").join("");
+            const profileUrl: string = ($(result).find("a")[2] as HTMLLinkElement).href;
 
             return new Entities.FacebookInfo(token, profileUrl);
         }
