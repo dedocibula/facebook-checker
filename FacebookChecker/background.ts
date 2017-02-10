@@ -6,8 +6,7 @@
         backoffCounts: Extensions.Pair<Entities.EntityType, number>[];
         fetchLimit: number;
         notificationFadeoutDelay: number;
-        simpleMessagePrefix: string;
-        complexMessagePrefix: string;
+        messagePrefix: string;
         sound: string;
         contextMessage: string;
         notificationIcon: string;
@@ -531,8 +530,7 @@
                 const emoticons: Extensions.Pair<Extensions.Range, string>[] = Extensions.EmoticonHelper.identifyEmoticons(text);
                 const picture: string = lastSender.profilePicture;
                 const state: Entities.State = this.parseState(!repliedLast ? message.unread_count as number : 0);
-                const prefix: string = message.participants.length <= 2 ? this.settings.simpleMessagePrefix : this.settings.complexMessagePrefix;
-                const url: string = this.settings.baseUrl + prefix + message.thread_fbid;
+                const url: string = this.settings.baseUrl + this.settings.messagePrefix + message.thread_fbid;
                 const seenByAll: boolean = json.roger[message.thread_fbid] && participantIds.map(participantId => participantId.substring(5))
                     .every(participantId => json.roger[message.thread_fbid][participantId] && json.roger[message.thread_fbid][participantId].watermark &&
                         json.roger[message.thread_fbid][participantId].watermark - message.last_message_timestamp === 0);
@@ -615,8 +613,7 @@
             ],
             notificationFadeoutDelay: 10 * 1000,
             fetchLimit: 5,
-            simpleMessagePrefix: "/messages/",
-            complexMessagePrefix: "/messages/conversation-",
+            messagePrefix: "/messages/t/",
             sound: "chime.ogg",
             contextMessage: "www.facebook.com",
             notificationIcon: "Images/icon48.png",
