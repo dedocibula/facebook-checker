@@ -466,3 +466,8 @@ small.text-muted {
     border: 1px solid #dcdee3;
     padding: 2px;
 }
+
+#options a {
+    padding-left: 0;
+    padding-right: 0;
+}
