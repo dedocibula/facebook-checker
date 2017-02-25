@@ -105,8 +105,13 @@ hr {
         padding-left: 30px;
     }
 
-    .navbar-blue li > a:hover, .navbar-blue li > a:focus, .navbar-blue .open, .navbar-blue .open > a, .navbar-blue .open > a:hover, .navbar-blue .open > a:focus {
+    .navbar-blue li > a:hover, .navbar-blue .open, .navbar-blue .open > a, .navbar-blue .open > a:hover, .navbar-blue .selected > a, .navbar-blue .selected > a:focus {
         background-color: #2A4888;
+        color: #fff;
+    }
+
+    .navbar-blue li > a:focus, .navbar-blue .open > a:focus {
+        background-color: #3B5999;
         color: #fff;
     }
 
@@ -372,11 +377,6 @@ small.text-muted {
 .icon {
     width: 16px;
     height: 16px;
-}
-
-.selected {
-    background-color: #2A4888;
-    color: #fff;
 }
 
 .read-button-container {
