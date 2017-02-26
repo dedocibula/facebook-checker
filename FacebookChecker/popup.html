@@ -34,7 +34,7 @@
                         <li id="friendRequests" data-unread="0">
                             <a href="#"><i class="glyphicon glyphicon-user"></i> New Friends</a>
                         </li>
-                        <li id="options" title="Options">
+                        <li id="options">
                             <a href="#"><i class="glyphicon glyphicon-option-vertical"></i></a>
                         </li>
                     </ul>
@@ -80,9 +80,23 @@
         <!-- /footer -->
     </div>
     <!-- /main container -->
+    <!-- hidden templates -->
+    <div id="hidden-templates">
+        <!-- options popover content -->
+        <div id="options-popover-content" data-template="<div class='popover' role='tooltip'><div class='popover-content'></div></div>">
+            <div class="list-group">
+                <div class="list-group-item">
+                    <i class="glyphicon glyphicon-minus-sign"></i> Do Not Disturb
+                </div>
+            </div>
+        </div>
+        <!-- /options popover content -->
+    </div>
+    <!-- /hidden templates -->
 
     <script type="text/javascript" src="Scripts/jquery-3.1.0.min.js"></script>
     <script type="text/javascript" src="Scripts/handlebars.runtime.min.js"></script>
+    <script type="text/javascript" src="Scripts/bootstrap.min.js"></script>
     <script type="text/javascript" src="Scripts/templates.js"></script>
     <script type="text/javascript" src="entities.js"></script>
     <script type="text/javascript" src="extensions.js"></script>

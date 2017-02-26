@@ -22,6 +22,8 @@
         footerLink: string;
         mainListItems: string;
         pictureSize: number;
+        optionsContainer: string;
+        optionsContent: string;
 
         notificationsTemplate: string;
         messagesTemplate: string;
@@ -91,7 +93,9 @@
                 .on("click", self.navigationLinks, function (event) {
                     event.preventDefault();
                     const link: HTMLElement = this as HTMLElement;
-                    self.load(Entities.EntityType[(link.id.charAt(0).toUpperCase() + link.id.slice(1))]);
+                    const linkType: string = link.id.charAt(0).toUpperCase() + link.id.slice(1);
+                    if (Entities.EntityType.hasOwnProperty(linkType))
+                        self.load(Entities.EntityType[linkType]);
                 })
                 .off("mouseover mouseout")
                 .on("mouseover mouseout", self.mainListItems, function () {
@@ -175,6 +179,7 @@
         private $errorMessage: JQuery;
         private $authorizedSections: JQuery;
         private $loaderImage: JQuery;
+        private $optionsPopover: JQuery;
         private $navigationMappings: { [type: string]: JQuery };
         private footerLink: HTMLLinkElement;
 
@@ -199,6 +204,7 @@
 
             this.navigationMappings = settings.navigationMappings;
             this.initializeHandlebars(settings);
+            this.initializeOptions(settings);
         }
 
         public renderNotifications(notifications: Entities.Notification[]): void {
@@ -260,6 +266,17 @@
             this.$mainSection.hide();
             this.$errorMessage.text(error);
             this.$errorSection.show();
+        }
+
+        public initializeOptions(elements: ISettings): void {
+            const $optionsContent: JQuery = $(elements.optionsContent);
+            this.$optionsPopover = $(elements.optionsContainer).popover({
+                template: $optionsContent.data("template"),
+                content: $optionsContent.html(),
+                html: true,
+                placement: "bottom",
+                trigger: "focus"
+            });
         }
 
         private initializeHandlebars(elements: ISettings): void {
@@ -404,6 +421,8 @@
             footerLink: "#footer",
             mainListItems: "#main-section a.list-group-item",
             pictureSize: 50,
+            optionsContainer: "#options",
+            optionsContent: "#options-popover-content",
 
             notificationsTemplate: "notifications",
             messagesTemplate: "messages",

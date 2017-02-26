@@ -41,6 +41,7 @@
     <Content Include="Images\indicator_white_large.gif" />
     <Content Include="Images\message-icons.png" />
     <Content Include="Images\read-buttons.png" />
+    <Content Include="options.html" />
     <Content Include="packages.config" />
     <Content Include="manifest.json" />
     <Content Include="App_Readme\Handlebarsjs_README.md" />
@@ -90,6 +91,7 @@
     <TypeScriptCompile Include="extensions.ts" />
     <TypeScriptCompile Include="interfaces.ts" />
     <TypeScriptCompile Include="popup.ts" />
+    <TypeScriptCompile Include="Scripts\typings\bootstrap\index.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\chrome\chrome-app.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\chrome\chrome-cast.d.ts" />
     <TypeScriptCompile Include="Scripts\typings\chrome\chrome.d.ts" />

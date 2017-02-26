@@ -105,7 +105,9 @@ hr {
         padding-left: 30px;
     }
 
-    .navbar-blue li > a:hover, .navbar-blue .open, .navbar-blue .open > a, .navbar-blue .open > a:hover, .navbar-blue .selected > a, .navbar-blue .selected > a:focus {
+    .navbar-blue li > a:hover, .navbar-blue .open, .navbar-blue .open > a, .navbar-blue .open > a:hover, 
+    .navbar-blue .selected > a, .navbar-blue .selected > a:focus, .navbar-blue li > a:focus:hover, 
+    .navbar-blue .open > a:focus:hover {
         background-color: #2A4888;
         color: #fff;
     }
@@ -470,4 +472,38 @@ small.text-muted {
 #options a {
     padding-left: 0;
     padding-right: 0;
+}
+
+.popover {
+    font-family: Verdana, Arial,sans-serif;
+    font-size: 12px;
+    color: #555;
+}
+
+    .popover.bottom {
+        top: 20px !important;
+        left: 320px !important;
+        width: 120px;
+        margin-top: 0;
+    }
+
+.popover-content {
+    padding: 0;   
+}
+
+    .popover-content .list-group {
+        cursor: pointer;
+    }
+
+    .popover-content .list-group-item {
+        text-align: center;
+    }
+
+        .popover-content .list-group-item:hover {
+            text-decoration: none;
+            background-color: #f5f5f5;
+        }
+
+#hidden-templates {
+    display: none;
 }
