@@ -105,8 +105,13 @@
                 .on("click", self.optionsLinks, function (event) {
                     event.preventDefault();
                     const link: HTMLElement = this as HTMLElement;
-                    if (link.id === "DND")
-                        self.toggleDnd(!$(link).data("enabled"));
+                    if (link.id === "DND") {
+                        const toggleOn: boolean = !$(link).data("enabled");
+                        self.backendService.toggleDoNotDisturb(toggleOn, (response: Entities.Response) => {
+                            if (response.status === Entities.ResponseStatus.Ok)
+                                self.renderer.toggleDndLabels(toggleOn);
+                            });
+                    }
                 })
                 .off("mouseover mouseout")
                 .on("mouseover mouseout", self.mainListItems, function () {
@@ -121,10 +126,6 @@
         public load(entityType?: Entities.EntityType): void {
             this.renderer.toggleLoading();
             this.backendService.fetchAll(response => this.renderView(response, entityType));
-        }
-
-        private toggleDnd(on: boolean): void {
-            this.renderer.toggleDndLabels(on);
         }
 
         private renderView(response: Entities.Response, entityType?: Entities.EntityType) {
@@ -400,6 +401,10 @@
 
         public resolveFriendRequest(friendInfo: Entities.FriendInfo, onReady?: (response: Entities.Response) => void): void {
             this.internalRequest("resolveFriendRequest", [friendInfo], onReady);
+        }
+
+        public toggleDoNotDisturb(on: boolean, onReady?: (response: Entities.Response) => void): void {
+            this.internalRequest("toggleDoNotDisturb", [on], onReady);
         }
 
         private internalRequest(action: string, parameters?: any[], onReady?: (response: Entities.Response) => void): void {

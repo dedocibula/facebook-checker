@@ -27,6 +27,8 @@
         markRead(readInfo: Entities.ReadInfo, onReady?: (response: Entities.Response) => void): void;
 
         resolveFriendRequest(friendInfo: Entities.FriendInfo, onReady?: (response: Entities.Response) => void): void;
+
+        toggleDoNotDisturb(on: boolean, onReady? : (response: Entities.Response) => void): void;
     }
 
     export interface INotifiable {

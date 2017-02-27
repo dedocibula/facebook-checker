@@ -22,6 +22,7 @@
         private timer: number;
         private isOnline: boolean;
         private sound: HTMLAudioElement;
+        private dndEnabled: boolean;
 
         private info: Entities.FacebookInfo;
         private unread: { [key: string]: string };
@@ -33,6 +34,7 @@
             this.chrome = chrome;
             this.timer = null;
             this.isOnline = false;
+            this.dndEnabled = false;
 
             this.unread = {};
             this.loadCache = new Extensions.CountDownCache<Entities.EntityType, Entities.FacebookEntity[]>(this.expandCounters(this.settings.backoffCounts));
@@ -92,6 +94,16 @@
                 });
         }
 
+        public toggleDoNotDisturb(on: boolean, onReady?: (response: Entities.Response) => void): void {
+            if (this.dndEnabled !== on) {
+                this.dndEnabled = on;
+                this.chrome.updateExtensionIcon(!on);
+                this.chrome.updateBadge(on ? "DND" : "");
+            }
+            if (typeof onReady === "function")
+                onReady(new Entities.Response(Entities.ResponseStatus.Ok));
+        }
+
         public stop(): void {
             if (!this.timer)
                 return;
@@ -120,14 +132,14 @@
 
         private processResponse(response: Entities.Response): void {
             this.online = response.status === Entities.ResponseStatus.Ok;
-            if (response.status !== Entities.ResponseStatus.Ok)
+            if (response.status !== Entities.ResponseStatus.Ok || this.dndEnabled)
                 return;
 
             this.checkNew(response.messages, message => message.state === Entities.State.Unread && !message.repliedLast);
             this.checkNew(response.notifications, notification => notification.state === Entities.State.Unseen || notification.state === Entities.State.Unread);
             this.checkNew(response.friendRequests, friendRequest => friendRequest.state === Entities.State.Unread);
 
-            this.chrome.updateUnreadCounter(response.newMessages + response.newNotifications + response.newFriendRequests);
+            this.chrome.updateBadge(response.newMessages + response.newNotifications + response.newFriendRequests);
         }
 
         private try<T>(action: (info: Entities.FacebookInfo) => Promise<T>, mapper: (result: T) => Entities.Response): Promise<Entities.Response> {
@@ -273,10 +285,13 @@
             }
         }
 
-        public updateUnreadCounter(value: number): void {
+        public updateBadge(value: number | string): void {
             if (chrome && chrome.browserAction) {
                 chrome.browserAction.setBadgeBackgroundColor({ color: this.settings.badgeColor });
-                chrome.browserAction.setBadgeText({ text: value > 0 ? value.toString() : "" });
+                if (typeof value === "number")
+                    chrome.browserAction.setBadgeText({ text: value > 0 ? value.toString() : "" });
+                else
+                    chrome.browserAction.setBadgeText({ text: value });
             }
         }
 
