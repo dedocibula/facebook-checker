@@ -40,7 +40,7 @@
 
             this.unread = {};
             this.loadCache = new Extensions.CountDownCache<Entities.EntityType, Entities.FacebookEntity[]>(this.expandCounters(this.settings.backoffCounts));
-            this.emptyCallback = (_) => {};
+            this.emptyCallback = () => {};
         }
 
         public start(onFirst?: (response: Entities.Response) => void): void {
