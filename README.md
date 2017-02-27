@@ -12,6 +12,7 @@ Provided features:
 * Graphic emoji
 * Facebook Friend Requests monitoring
 * Friend request resolution
+* Do-Not-Disturb
 
 ### Installation:
 
