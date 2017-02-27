@@ -97,25 +97,12 @@ hr {
         color: #efefef;
     }
 
-    .navbar-blue .dropdown-menu li a {
-        color: #2A4888;
-    }
-
-    .navbar-blue .dropdown-menu li > a {
-        padding-left: 30px;
-    }
-
-    .navbar-blue li > a:hover, .navbar-blue .open, .navbar-blue .open > a, .navbar-blue .open > a:hover, 
-    .navbar-blue .selected > a, .navbar-blue .selected > a:focus, .navbar-blue li > a:focus:hover, 
-    .navbar-blue .open > a:focus:hover {
-        background-color: #2A4888;
-        color: #fff;
-    }
-
-    .navbar-blue li > a:focus, .navbar-blue .open > a:focus {
-        background-color: #3B5999;
-        color: #fff;
-    }
+        .navbar-blue li > a:hover, .navbar-blue .open, .navbar-blue .open > a, .navbar-blue .open > a:hover,
+        .navbar-blue .selected > a, .navbar-blue .selected > a:focus, .navbar-blue li > a:focus,
+        .navbar-blue .open > a:focus {
+            background-color: #2A4888;
+            color: #fff;
+        }
 
 #main {
     padding-left: 0;
@@ -211,6 +198,35 @@ h1, h2, h3 {
         padding: 6px 8px;
     }
 
+    .navbar-nav .open .dropdown-menu {
+        font-family: Verdana, Arial,sans-serif;
+        font-size: 12px;
+        position: absolute;
+        right: 0;
+        z-index: 999;
+        border: 1px solid rgba(0,0,0,.2);
+        border-radius: 6px;
+        background-clip: padding-box;
+        background-color: #fff;
+        min-width: 120px;
+        padding: 0;
+    }
+
+    .navbar-nav a.dropdown-toggle {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .navbar-nav .open .dropdown-menu li a {
+        color: #555;
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+        .navbar-nav .open .dropdown-menu li a:hover {
+            background-color: #ebeef4;
+        }
+
 .btn-primary, .label-primary, .list-group-item.active, .list-group-item.active:hover, .list-group-item.active:focus {
     background-color: #3B5999;
     border-color: #365899;
@@ -220,13 +236,14 @@ h1, h2, h3 {
     .btn-primary:hover, .btn-primary:active {
         background-color: #29487d;
         border-color: #29487d;
-    } 
+    }
 
 .btn-secondary {
     background-color: #f6f7f9;
     border-color: #ced0d4;
     color: #4b4f56;
 }
+
     .btn-secondary:hover {
         background-color: #e9ebee;
     }
@@ -354,9 +371,9 @@ small.text-muted {
     color: #3B5999;
 }
 
-.requestor-name a:hover {
-    text-decoration: underline;
-}
+    .requestor-name a:hover {
+        text-decoration: underline;
+    }
 
 .request-buttons {
     padding-top: 10px;
@@ -368,9 +385,9 @@ small.text-muted {
     color: #999;
 }
 
-.tooltip-text a:hover {
-    text-decoration: underline;
-}
+    .tooltip-text a:hover {
+        text-decoration: underline;
+    }
 
 .emphasize {
     font-weight: bold;
@@ -467,43 +484,4 @@ small.text-muted {
     background-color: #fff;
     border: 1px solid #dcdee3;
     padding: 2px;
-}
-
-#options a {
-    padding-left: 0;
-    padding-right: 0;
-}
-
-.popover {
-    font-family: Verdana, Arial,sans-serif;
-    font-size: 12px;
-    color: #555;
-}
-
-    .popover.bottom {
-        top: 20px !important;
-        left: 320px !important;
-        width: 120px;
-        margin-top: 0;
-    }
-
-.popover-content {
-    padding: 0;   
-}
-
-    .popover-content .list-group {
-        cursor: pointer;
-    }
-
-    .popover-content .list-group-item {
-        text-align: center;
-    }
-
-        .popover-content .list-group-item:hover {
-            text-decoration: none;
-            background-color: #f5f5f5;
-        }
-
-#hidden-templates {
-    display: none;
 }

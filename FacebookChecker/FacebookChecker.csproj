@@ -41,7 +41,6 @@
     <Content Include="Images\indicator_white_large.gif" />
     <Content Include="Images\message-icons.png" />
     <Content Include="Images\read-buttons.png" />
-    <Content Include="options.html" />
     <Content Include="packages.config" />
     <Content Include="manifest.json" />
     <Content Include="App_Readme\Handlebarsjs_README.md" />

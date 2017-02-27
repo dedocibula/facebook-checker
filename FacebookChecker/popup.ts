@@ -22,8 +22,11 @@
         footerLink: string;
         mainListItems: string;
         pictureSize: number;
-        optionsContainer: string;
-        optionsContent: string;
+
+        optionsLinks: string,
+        dndOption: string,
+        dndOnLabel: string,
+        dndOffLabel: string,
 
         notificationsTemplate: string;
         messagesTemplate: string;
@@ -42,6 +45,7 @@
         private readButtons: string;
         private friendRequestsButtons: string;
         private mainListItems: string;
+        private optionsLinks: string;
 
         private $body: JQuery;
 
@@ -57,6 +61,7 @@
             this.readButtons = settings.readButtons;
             this.friendRequestsButtons = settings.friendRequestsButtons;
             this.mainListItems = settings.mainListItems;
+            this.optionsLinks = settings.optionsLinks;
 
             this.$body = $("body");
         }
@@ -97,6 +102,12 @@
                     if (Entities.EntityType.hasOwnProperty(linkType))
                         self.load(Entities.EntityType[linkType]);
                 })
+                .on("click", self.optionsLinks, function (event) {
+                    event.preventDefault();
+                    const link: HTMLElement = this as HTMLElement;
+                    if (link.id === "DND")
+                        self.toggleDnd(!$(link).data("enabled"));
+                })
                 .off("mouseover mouseout")
                 .on("mouseover mouseout", self.mainListItems, function () {
                     const $button: JQuery = $(this).find(self.readButtons);
@@ -110,6 +121,10 @@
         public load(entityType?: Entities.EntityType): void {
             this.renderer.toggleLoading();
             this.backendService.fetchAll(response => this.renderView(response, entityType));
+        }
+
+        private toggleDnd(on: boolean): void {
+            this.renderer.toggleDndLabels(on);
         }
 
         private renderView(response: Entities.Response, entityType?: Entities.EntityType) {
@@ -179,7 +194,9 @@
         private $errorMessage: JQuery;
         private $authorizedSections: JQuery;
         private $loaderImage: JQuery;
-        private $optionsPopover: JQuery;
+        private $dndOption: JQuery;
+        private $dndOnLabel: JQuery;
+        private $dndOffLabel: JQuery;
         private $navigationMappings: { [type: string]: JQuery };
         private footerLink: HTMLLinkElement;
 
@@ -200,11 +217,13 @@
             this.$errorMessage = $(settings.errorMessage);
             this.$authorizedSections = $(settings.authorizedSections);
             this.$loaderImage = $(settings.loaderImage);
+            this.$dndOption = $(settings.dndOption);
+            this.$dndOnLabel = $(settings.dndOnLabel);
+            this.$dndOffLabel = $(settings.dndOffLabel);
             this.footerLink = $(settings.footerLink)[0] as HTMLLinkElement;
 
             this.navigationMappings = settings.navigationMappings;
             this.initializeHandlebars(settings);
-            this.initializeOptions(settings);
         }
 
         public renderNotifications(notifications: Entities.Notification[]): void {
@@ -268,15 +287,15 @@
             this.$errorSection.show();
         }
 
-        public initializeOptions(elements: ISettings): void {
-            const $optionsContent: JQuery = $(elements.optionsContent);
-            this.$optionsPopover = $(elements.optionsContainer).popover({
-                template: $optionsContent.data("template"),
-                content: $optionsContent.html(),
-                html: true,
-                placement: "bottom",
-                trigger: "focus"
-            });
+        public toggleDndLabels(on: boolean): void {
+            this.$dndOption.data("enabled", on);
+            if (on) {
+                this.$dndOffLabel.show();
+                this.$dndOnLabel.hide();
+            } else {
+                this.$dndOffLabel.hide();
+                this.$dndOnLabel.show();
+            }
         }
 
         private initializeHandlebars(elements: ISettings): void {
@@ -421,8 +440,11 @@
             footerLink: "#footer",
             mainListItems: "#main-section a.list-group-item",
             pictureSize: 50,
-            optionsContainer: "#options",
-            optionsContent: "#options-popover-content",
+
+            optionsLinks: ".dropdown-menu a.list-group-item",
+            dndOption: "#DND",
+            dndOnLabel: "#DND-on",
+            dndOffLabel: "#DND-off",
 
             notificationsTemplate: "notifications",
             messagesTemplate: "messages",
