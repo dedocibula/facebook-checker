@@ -33,7 +33,8 @@
         Ok,
         ConnectionRejected,
         Unauthorized,
-        IllegalToken
+        IllegalToken,
+        DoNotDisturb
     }
 
     export class FacebookInfo {

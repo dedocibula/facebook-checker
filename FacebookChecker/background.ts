@@ -12,7 +12,8 @@
         notificationIcon: string;
         onlineIcon: string;
         offlineIcon: string;
-        badgeColor: number[];
+        badgeAlertColor: number[];
+        badgeNormalColor: number[],
     }
 
     class BackgroundWorker implements Api.IBackendService {
@@ -27,6 +28,7 @@
         private info: Entities.FacebookInfo;
         private unread: { [key: string]: string };
         private loadCache: Extensions.CountDownCache<Entities.EntityType, Entities.FacebookEntity[]>;
+        private emptyCallback: (response: Entities.Response) => void;
 
         constructor(settings: ISettings, loader: Api.ILoader, chrome: ChromeService) {
             this.settings = settings;
@@ -38,18 +40,20 @@
 
             this.unread = {};
             this.loadCache = new Extensions.CountDownCache<Entities.EntityType, Entities.FacebookEntity[]>(this.expandCounters(this.settings.backoffCounts));
+            this.emptyCallback = (_) => {};
         }
 
         public start(onFirst?: (response: Entities.Response) => void): void {
             if (this.timer)
                 return;
+            onFirst = typeof onFirst === "function" ? onFirst : this.emptyCallback;
             this.reloadAll().then(response => {
-                if (onFirst)
-                    onFirst(response);
+                onFirst(response);
                 this.processResponse(response);
             });
             this.timer = setInterval(() => {
-                this.reloadAll().then(response => this.processResponse(response));
+                if (!this.dndEnabled)
+                    this.reloadAll().then(response => this.processResponse(response));
             }, this.settings.refreshInterval);
         }
 
@@ -67,12 +71,12 @@
         public markRead(readInfo: Entities.ReadInfo, onReady?: (response: Entities.Response) => void): void {
             if (readInfo.state === Entities.State.Read)
                 return;
+            onReady = typeof onReady === "function" ? onReady : this.emptyCallback;
             this.try(readInfo.entityType === Entities.EntityType.Messages ?
                 (info: Entities.FacebookInfo) => this.loader.markMessageRead(info.token, readInfo.alertId) :
                 (info: Entities.FacebookInfo) => this.loader.markNotificationRead(info.token, readInfo.alertId),
                 () => new Entities.Response(Entities.ResponseStatus.Ok)).then(response => {
-                    if (typeof onReady === "function")
-                        onReady(response);
+                    onReady(response);
                     if (response.status === Entities.ResponseStatus.Ok) {
                         this.loadCache.invalidate();
                         this.reloadAll().then(secondResponse => this.processResponse(secondResponse));
@@ -81,13 +85,13 @@
         }
 
         public resolveFriendRequest(friendInfo: Entities.FriendInfo, onReady?: (response: Entities.Response) => void): void {
+            onReady = typeof onReady === "function" ? onReady : this.emptyCallback;
             this.try((info: Entities.FacebookInfo) => this.loader.resolveFriendRequest(info.token, friendInfo.requestId, friendInfo.accept),
                 () => new Entities.Response(Entities.ResponseStatus.Ok)).then(response => {
                     if (response.status === Entities.ResponseStatus.Ok) {
                         this.loadCache.invalidate();
                         this.reloadAll().then(secondResponse => {
-                            if (typeof onReady === "function")
-                                onReady(secondResponse);
+                            onReady(secondResponse);
                             this.processResponse(secondResponse);
                         });
                     }
@@ -95,13 +99,18 @@
         }
 
         public toggleDoNotDisturb(on: boolean, onReady?: (response: Entities.Response) => void): void {
-            if (this.dndEnabled !== on) {
-                this.dndEnabled = on;
-                this.chrome.updateExtensionIcon(!on);
-                this.chrome.updateBadge(on ? "DND" : "");
+            onReady = typeof onReady === "function" ? onReady : this.emptyCallback;
+            this.dndEnabled = on;
+            this.chrome.updateBadge(on ? "DND" : "");
+            if (on) {
+                onReady(new Entities.Response(Entities.ResponseStatus.DoNotDisturb));
+            } else {
+                this.loadCache.invalidate();
+                this.reloadAll().then(response => {
+                    onReady(response);
+                    this.processResponse(response);
+                });
             }
-            if (typeof onReady === "function")
-                onReady(new Entities.Response(Entities.ResponseStatus.Ok));
         }
 
         public stop(): void {
@@ -124,15 +133,16 @@
                 const newNotifications: number = entities[0].filter(entity => entity.state !== Entities.State.Read).length;
                 const newMessages: number = entities[1].filter(entity => entity.state !== Entities.State.Read).length;
                 const newFriendRequests: number = entities[2].filter(entity => entity.state !== Entities.State.Read).length;
+                const status: Entities.ResponseStatus = !this.dndEnabled ? Entities.ResponseStatus.Ok : Entities.ResponseStatus.DoNotDisturb;
 
-                return new Entities.Response(Entities.ResponseStatus.Ok, newNotifications, newMessages, newFriendRequests,
+                return new Entities.Response(status, newNotifications, newMessages, newFriendRequests,
                     (entities[0] as Entities.Notification[]), (entities[1] as Entities.Message[]), (entities[2] as Entities.FriendRequest[]));
             });
         }
 
         private processResponse(response: Entities.Response): void {
-            this.online = response.status === Entities.ResponseStatus.Ok;
-            if (response.status !== Entities.ResponseStatus.Ok || this.dndEnabled)
+            this.online = response.status === Entities.ResponseStatus.Ok || response.status === Entities.ResponseStatus.DoNotDisturb;
+            if (response.status !== Entities.ResponseStatus.Ok)
                 return;
 
             this.checkNew(response.messages, message => message.state === Entities.State.Unread && !message.repliedLast);
@@ -169,12 +179,12 @@
                 });
         }
 
-        private checkNew<T extends Entities.FacebookEntity>(entities: T[], isNewPredicate: (entity: T) => boolean): void {
+        private checkNew<T extends Api.INotifiable>(entities: T[], isNewPredicate: (entity: T) => boolean): void {
             for (let entity of entities) {
                 if (isNewPredicate(entity))
                     this.notifyOnce(entity);
                 else
-                    delete this.unread[entity.id];
+                    delete this.unread[entity.getId()];
             }
         }
 
@@ -287,11 +297,13 @@
 
         public updateBadge(value: number | string): void {
             if (chrome && chrome.browserAction) {
-                chrome.browserAction.setBadgeBackgroundColor({ color: this.settings.badgeColor });
-                if (typeof value === "number")
+                if (typeof value === "number") {
+                    chrome.browserAction.setBadgeBackgroundColor({ color: this.settings.badgeAlertColor });
                     chrome.browserAction.setBadgeText({ text: value > 0 ? value.toString() : "" });
-                else
+                } else {
+                    chrome.browserAction.setBadgeBackgroundColor({ color: this.settings.badgeNormalColor });
                     chrome.browserAction.setBadgeText({ text: value });
+                }
             }
         }
 
@@ -634,7 +646,8 @@
             notificationIcon: "Images/icon48.png",
             onlineIcon: "Images/icon19.png",
             offlineIcon: "Images/icon-loggedout.png",
-            badgeColor: [232, 76, 61, 255]
+            badgeAlertColor: [232, 76, 61, 255],
+            badgeNormalColor: [0, 0, 0, 255]
         };
 
         const loader: Api.ILoader = new Loader(settings);

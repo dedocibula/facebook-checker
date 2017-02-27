@@ -106,11 +106,15 @@
                     event.preventDefault();
                     const link: HTMLElement = this as HTMLElement;
                     if (link.id === "DND") {
-                        const toggleOn: boolean = !$(link).data("enabled");
-                        self.backendService.toggleDoNotDisturb(toggleOn, (response: Entities.Response) => {
-                            if (response.status === Entities.ResponseStatus.Ok)
-                                self.renderer.toggleDndLabels(toggleOn);
-                            });
+                        const $link: JQuery = $(link);
+                        self.backendService.toggleDoNotDisturb(!$link.data("enabled"), (response: Entities.Response) => {
+                            if (response.status === Entities.ResponseStatus.DoNotDisturb)
+                                self.renderer.toggleDndLabels(true);
+                            else {
+                                self.renderer.toggleLoading();
+                                self.renderView(response, $link.data("selected"));
+                            }
+                        });
                     }
                 })
                 .off("mouseover mouseout")
@@ -129,7 +133,8 @@
         }
 
         private renderView(response: Entities.Response, entityType?: Entities.EntityType) {
-            if (response.status === Entities.ResponseStatus.Ok) {
+            if (response.status === Entities.ResponseStatus.Ok ||
+                response.status === Entities.ResponseStatus.DoNotDisturb) {
                 if (typeof entityType === "number")
                     this.renderByType(entityType, response);
                 else
@@ -179,6 +184,7 @@
                 new Extensions.Pair(Entities.EntityType[Entities.EntityType.Messages], response.newMessages),
                 new Extensions.Pair(Entities.EntityType[Entities.EntityType.FriendRequests], response.newFriendRequests)
             );
+            this.renderer.toggleDndLabels(response.status === Entities.ResponseStatus.DoNotDisturb);
         }
     }
 
@@ -376,6 +382,7 @@
             const $element: JQuery = this.$navigationMappings[Entities.EntityType[type]];
             if (!$element.hasClass("selected"))
                 $element.addClass("selected").siblings().removeClass("selected");
+            this.$dndOption.data("selected", type);
         }
 
         private set navigationMappings(navigationMappings: { [type: string]: string }) {
