@@ -567,7 +567,7 @@
         }
 
         private parseFriendRequests(html: string): Entities.FriendRequest[] {
-            return $(html).find(".fbRequestList:first .objectListItem").map((_, friendRequest: HTMLLIElement) => {
+            return $(html).find(".fbRequestList:first .objectListItem").toArray().map((friendRequest: HTMLLIElement) => {
                 const $friendRequest: JQuery = $(friendRequest);
                 const id: string = $friendRequest.find("form input[name='request_id']").val();
                 const picture: string = $friendRequest.find("img:first").attr("src");
@@ -579,7 +579,7 @@
                 const mutualFriendTooltip: string = links[1] ? this.settings.baseUrl + links[1].pathname + links[1].search : null;
 
                 return new Entities.FriendRequest(id, requestor.fullName, requestor, picture, state, url, mutualFriendText, mutualFriendTooltip);
-            }).toArray() as Entities.FriendRequest[];
+            });
         }
 
         private parseState(state: boolean | number | string): Entities.State {
