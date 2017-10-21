@@ -528,11 +528,10 @@
         private parseNotifications(json: any): Entities.Notification[] {
             return (json.nodes as Array<any>).map(notification => {
                 const emphases: Extensions.Range[] = (notification.title.ranges as Array<any>).map(entity => new Extensions.Range(entity.offset, entity.offset + entity.length));
-                const authors: Entities.Author[] = (notification.actors as Array<any>).map(author => new Entities.Author(author.name, author.profile_picture.uri, author.name.split(" ")[0]));
+                const authors: Entities.Author[] = [new Entities.Author("", notification.thumbnail.uri, "")];
                 const state: Entities.State = this.parseState(notification.seen_state as string);
                 const timestamp: string = this.formTimestampText(notification.timestamp.text, json.servertime - notification.timestamp.time);
-                const attachment: string = this.extractAttachment(!notification.attached_story || notification.attached_story.attachments) ||
-                    this.extractAttachment(notification.attachments);
+                const attachment: string = notification.previewImage && notification.previewImage.uri;
 
                 return new Entities.Notification(notification.id, notification.title.text, emphases, authors, authors[0].profilePicture, state, notification.alert_id.split(":")[1], timestamp, notification.url, notification.icon.uri, attachment);
             });
@@ -613,19 +612,6 @@
             return (text && text.length !== 0) || !attachmentType ?
                 prefix + text :
                 prefix + `<${authorName} sent a ${attachmentType}>`;
-        }
-
-        private extractAttachment(attachments: any): string {
-            if (attachments) {
-                for (let attachment of attachments)
-                    if (attachment.media &&
-                        attachment.media.image &&
-                        attachment.media.image.uri &&
-                        attachment.style_list &&
-                        attachment.style_list[0] === "photo")
-                        return attachment.media.image.uri;
-            }
-            return null;
         }
     }
 
