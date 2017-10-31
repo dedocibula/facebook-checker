@@ -528,7 +528,7 @@
         private parseNotifications(json: any): Entities.Notification[] {
             return (json.nodes as Array<any>).map(notification => {
                 const emphases: Extensions.Range[] = (notification.title.ranges as Array<any>).map(entity => new Extensions.Range(entity.offset, entity.offset + entity.length));
-                const authors: Entities.Author[] = [new Entities.Author("", notification.thumbnail.uri, "")];
+                const authors: Entities.Author[] = (notification.actors as Array<any>).map(author => new Entities.Author(author.name, author.profile_picture.uri, author.name.split(" ")[0]));
                 const state: Entities.State = this.parseState(notification.seen_state as string);
                 const timestamp: string = this.formTimestampText(notification.timestamp.text, json.servertime - notification.timestamp.time);
                 const attachment: string = notification.previewImage && notification.previewImage.uri;
