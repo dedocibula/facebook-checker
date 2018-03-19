@@ -40,7 +40,7 @@
 
             this.unread = {};
             this.loadCache = new Extensions.CountDownCache<Entities.EntityType, Entities.FacebookEntity[]>(this.expandCounters(this.settings.backoffCounts));
-            this.emptyCallback = () => {};
+            this.emptyCallback = () => { };
         }
 
         public start(onFirst?: (response: Entities.Response) => void): void {
@@ -81,7 +81,7 @@
                         this.loadCache.invalidate();
                         this.reloadAll().then(secondResponse => this.processResponse(secondResponse));
                     }
-            });
+                });
         }
 
         public resolveFriendRequest(friendInfo: Entities.FriendInfo, onReady?: (response: Entities.Response) => void): void {
@@ -326,7 +326,7 @@
 
     class Loader implements Api.ILoader {
         private static get NOTIFICATION_URI(): string { return "/ajax/notifications/client/get.php"; }
-        private static get MESSAGE_URI(): string { return "/ajax/mercury/threadlist_info.php"; }
+        private static get MESSAGE_URI(): string { return "/api/graphqlbatch"; }
         private static get FRIEND_REQUEST_URI(): string { return "/ajax/requests/loader"; }
 
         private static get MARK_NOTIFICATION_READ_URI(): string { return "/ajax/notifications/mark_read.php"; }
@@ -381,11 +381,11 @@
         }
 
         public getMessagesAsync(token: string, profileUrl: string): Promise<Entities.Message[]> {
-            return this.getMessagesOfTypeAsync("inbox", token, profileUrl);
+            return this.getMessagesOfTypeAsync("INBOX", token, profileUrl);
         }
 
         public getMessageRequestsAsync(token: string, profileUrl: string): Promise<Entities.Message[]> {
-            return this.getMessagesOfTypeAsync("pending", token, profileUrl);
+            return this.getMessagesOfTypeAsync("PENDING", token, profileUrl);
         }
 
         public getFriendRequestsAsync(token: string): Promise<Entities.FriendRequest[]> {
@@ -494,24 +494,25 @@
         private getMessagesOfTypeAsync(type: string, token: string, profileUrl: string): Promise<Entities.Message[]> {
             return new Promise<Entities.Message[]>((resolve, reject) => {
                 const data: any = {};
-                data[`${type}[offset]`] = 0;
-                data[`${type}[limit]`] = this.settings.fetchLimit;
+                // TODO hardcoded doc_id https://github.com/carpedm20/fbchat/issues/241
+                data.queries = JSON.stringify({ "o0": { "doc_id": "1349387578499440", "query_params": { "limit": this.settings.fetchLimit, "tags": [type] } } });
                 data.fb_dtsg = token;
                 data.__a = 1;
 
                 $.ajax({
-                    url: this.settings.baseUrl + Loader.MESSAGE_URI + this.settings.uriSuffix,
+                    url: this.settings.baseUrl + Loader.MESSAGE_URI,
                     method: "POST",
                     accepts: "*/*",
                     dataType: "text",
                     data: data
                 }).done((result: string) => {
-                    const response = JSON.parse((result).match(/{.*}/)[0]);
-                    if (!response.error)
-                        resolve(response.payload.threads ? this.parseMessages(response.payload, profileUrl) : []);
-                    else
-                        reject(new Extensions.FacebookError(response.error === 1357001 ?
-                            Entities.ResponseStatus.Unauthorized : Entities.ResponseStatus.IllegalToken, response));
+                    const separator: number = result.lastIndexOf("{");
+                    const status = JSON.parse(result.substring(separator));
+                    if (status.successful_results > 0) {
+                        const response = JSON.parse(result.substring(0, separator));
+                        resolve(this.parseMessages(response.o0.data.viewer.message_threads.nodes, profileUrl));
+                    } else
+                        reject(new Extensions.FacebookError(Entities.ResponseStatus.IllegalToken));
                 }).fail(() => {
                     reject(new Extensions.FacebookError(Entities.ResponseStatus.ConnectionRejected));
                 });
@@ -537,31 +538,34 @@
             });
         }
 
-        private parseMessages(json: any, profileUrl: string): Entities.Message[] {
-            const participants: { [id: string]: Entities.Author; } = {};
-            let userId: string;
-            for (let participant of json.participants) {
-                participants[participant.id] = new Entities.Author(participant.name, participant.big_image_src, participant.short_name);
-                if (participant.href === profileUrl)
-                    userId = participant.id;
-            }
-            return (json.threads as Array<any>).map(message => {
-                const participantIds: string[] = (message.participants as Array<string>).filter(participantId => participantId !== userId);
+        private parseMessages(messages: any, profileUrl: string): Entities.Message[] {
+            return (messages as Array<any>).map(message => {
+                const participants: { [id: string]: Entities.Author; } = {};
+                const participantIds: string[] = [];
+                let userId: string;
+                for (let participant of message.all_participants.nodes) {
+                    const messagingActor: any = participant.messaging_actor;
+                    participants[messagingActor.id] = new Entities.Author(messagingActor.name, messagingActor.big_image_src.uri, messagingActor.short_name);
+                    if (messagingActor.url === profileUrl)
+                        userId = messagingActor.id;
+                    else
+                        participantIds.push(messagingActor.id);
+                }
                 const authors: Entities.Author[] = participantIds.map(participantId => participants[participantId]);
-                const header: string = message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
-                const repliedLast: boolean = message.snippet_sender === userId;
-                const lastSender: Entities.Author = participants[message.snippet_sender] || authors[0];
-                const text: string = this.formMessageText(message.snippet, message.snippet_has_attachment ? message.snippet_attachments[0].attach_type : null,
-                    !repliedLast && authors.length > 1 && message.snippet_sender in participants, !repliedLast ? lastSender.shortName : "You");
-                const emoticons: Extensions.Pair<Extensions.Range, string>[] = Extensions.EmoticonHelper.identifyEmoticons(text);
+                const header: string = !message.name || message.name.length === 0 ? authors.map(author => author.fullName).join(", ") : message.name;
+                const lastMessage: any = message.last_message.nodes[0];
+                const repliedLast: boolean = lastMessage.message_sender.messaging_actor.id === userId;
+                const lastSender: Entities.Author = participants[lastMessage.message_sender.messaging_actor.id];
+                const text: string = this.formMessageText(lastMessage.snippet, /* TODO extension + sticker */ null,
+                    !repliedLast && authors.length > 1, !repliedLast ? lastSender.shortName : "You");
                 const picture: string = lastSender.profilePicture;
                 const state: Entities.State = this.parseState(!repliedLast ? message.unread_count as number : 0);
-                const url: string = this.settings.baseUrl + this.settings.messagePrefix + message.thread_fbid;
-                const seenByAll: boolean = json.roger[message.thread_fbid] && participantIds.map(participantId => participantId.substring(5))
-                    .every(participantId => json.roger[message.thread_fbid][participantId] && json.roger[message.thread_fbid][participantId].watermark &&
-                        json.roger[message.thread_fbid][participantId].watermark - message.last_message_timestamp === 0);
+                const id: string = message.thread_key.thread_fbid || message.thread_key.other_user_id;
+                const url: string = this.settings.baseUrl + this.settings.messagePrefix + id;
+                const seenByAll: boolean = message.read_receipts.nodes.length === participantIds.length &&
+                    message.read_receipts.nodes.every(node => node.action >= lastMessage.timestamp_precise);
 
-                return new Entities.Message(message.thread_id, header, text, authors, picture, state, message.thread_fbid, message.timestamp_relative, url, repliedLast, seenByAll, emoticons);
+                return new Entities.Message(id, header, text, authors, picture, state, id, message.timestamp_relative, url, repliedLast, seenByAll, []);
             });
         }
 
