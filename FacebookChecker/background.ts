@@ -562,10 +562,11 @@
                 const state: Entities.State = this.parseState(!repliedLast ? message.unread_count as number : 0);
                 const id: string = message.thread_key.thread_fbid || message.thread_key.other_user_id;
                 const url: string = this.settings.baseUrl + this.settings.messagePrefix + id;
-                const seenByAll: boolean = message.read_receipts.nodes.length === participantIds.length &&
+                const seenByAll: boolean = message.read_receipts.nodes.length > participantIds.length &&
                     message.read_receipts.nodes.every(node => node.action >= lastMessage.timestamp_precise);
+                const emoticons: Extensions.Pair<Extensions.Range, string>[] = Extensions.EmoticonHelper.identifyEmoticons(text);
 
-                return new Entities.Message(id, header, text, authors, picture, state, id, message.timestamp_relative, url, repliedLast, seenByAll, []);
+                return new Entities.Message(id, header, text, authors, picture, state, id, message.timestamp_relative, url, repliedLast, seenByAll, emoticons);
             });
         }
 

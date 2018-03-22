@@ -41,7 +41,8 @@
                 "O.o": "emojiconfused_rev",
                 "O:)": "emojiangel",
                 "^_^": "emojikiki",
-                "o.O": "emojiconfused"
+                "o.O": "emojiconfused",
+                "󰀀": "emojilike"
             };
 
             return this.emojiClassSimpleMappings;
